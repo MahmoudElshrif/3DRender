@@ -26,18 +26,34 @@ import customtkinter as ct
 import time
 
 class App:
+    
     def __init__(self,master):
         self.master = master
         self.master.geometry("900x600")
         self.user = Student(0)
+        self.pages = {}
+        self.current = None
+        self.master.grid_rowconfigure(0,weight = 1)
+        self.master.grid_columnconfigure(0,weight = 1)
+        
+        for i in [self.Control_or_Student,self.Student_login,self.Student_menu]:
+            self.pages[i] = i()
+        
         self.switch_to(self.Control_or_Student)
     
-    def switch_to(self,page):
-        for i in self.master.winfo_children():
-            i.destroy()
+    def main_frame(self):
         frame = ct.CTkFrame(self.master,fg_color="transparent")
-        frame.pack(expand = True)
-        page(frame)
+        self.master.grid_propagate(False)
+        return frame
+    
+    def switch_to(self,page):
+        if(self.current):
+            self.current.grid_forget()
+        
+        frame = self.pages[page]
+        frame.grid(row=0,column=0)
+        self.current = frame
+        pass
     
     def button(self,root,gridx,gridy,text,font_size = 16,width = 200,height = 50,padx = 20,pady = 10,command = lambda : print("test")):
         btn = ct.CTkButton(root,text = text,font = ("",font_size),width = width,height = height,command = command)
@@ -48,7 +64,8 @@ class App:
         text.grid(row = gridx,column = gridy,padx = padx,pady = pady)
         return text
     
-    def Control_or_Student(self,frame):
+    def Control_or_Student(self):
+        frame = self.main_frame()
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_rowconfigure(1, weight=1)
         
@@ -58,7 +75,8 @@ class App:
         buttons.grid(row=1,column=0)
         self.button(buttons,0,0,"Student",padx=50,pady=(40,20),command=lambda: self.switch_to(self.Student_login))
         self.button(buttons,1,0,"Control",padx=50,pady=(20,40))
-    
+        
+        return frame
     
     def textbox_enter(self,event,button):
         button.invoke()
@@ -69,7 +87,10 @@ class App:
         return ("break")
     
     #Student menus-------------
-    def Student_login(self,frame):
+    def Student_login(self):
+        
+        frame = self.main_frame()
+        
         self.header(frame,"Student login")
         
         input = ct.CTkFrame(frame)
@@ -77,7 +98,6 @@ class App:
         
         def checkpasswrod(id, password):
             student = Student(id)
-            print(id,password)
             if(student.checkpassword(password)):
                 self.user = student
                 self.switch_to(self.Student_menu)
@@ -100,8 +120,13 @@ class App:
         back = self.button(input,5,0,"back",width = 150,height=30,pady=(3,20),command = lambda: self.switch_to(self.Control_or_Student)) 
         back.configure(fg_color="red")
         back.configure(hover_color="darkred")
+                
+        return frame
+    
+    
+    def Student_menu(self):
+        frame = self.main_frame()
         
-    def Student_menu(self,frame):
         self.header(frame,"Welcome, " + self.user.name)
         
         f = ct.CTkFrame(frame)
@@ -111,6 +136,8 @@ class App:
         news = self.button(f,1,0,"News")
         back = self.button(f,2,0,"login screen",command = lambda:self.switch_to(self.Control_or_Student))
         back.configure(fg_color = "red",hover_color = "darkred")
+            
+        return frame
     #--------------------------------------------
 
 root = ct.CTk()
