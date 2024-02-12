@@ -1,27 +1,5 @@
-#---------temporary test functions and classes, replace with the working ones---------
-class Student:
-    all_courses = ["Course A","Course B","Course C","Course D","Course E"]
-    all_groups = ["A","B","C","D"]
-    def __init__(self,id):
-        self.id = id
-        self.name = "Student"
-        self.courses = ["Course B","Course C","Course D"]
-        self.group = "A"
-        self.GPA = 4.0
-        pass
-
-    def checkpassword(self,password):
-        return (self.id == password) and (self.id == "admin")
-    
-    def add_course(self,course):
-        self.courses.append(course)
-    
-    def remove_course(self,course):
-        self.courses.remove(course)
-    def set_group(self,group):
-        self.group = group
-#------------------------------------------------------------------------------------------
-
+from prototype import *
+from pages import *
 import customtkinter as ct
 import time
 
@@ -30,100 +8,77 @@ class App:
     def __init__(self,master):
         self.master = master
         self.master.geometry("900x600")
-        self.user = Student(0)
-        self.pages = {}
-        self.current = None
         self.master.grid_rowconfigure(0,weight = 1)
         self.master.grid_columnconfigure(0,weight = 1)
-        
-        for i in [self.Control_or_Student,self.Student_login,self.Student_menu]:
-            self.pages[i] = i()
-        
-        self.switch_to(self.Control_or_Student)
-    
-    def main_frame(self):
-        frame = ct.CTkFrame(self.master,fg_color="transparent")
         self.master.grid_propagate(False)
-        return frame
-    
-    def switch_to(self,page):
-        if(self.current):
-            self.current.grid_forget()
         
-        frame = self.pages[page]
-        frame.grid(row=0,column=0)
-        self.current = frame
-        pass
+        PagesManger(self.master)
+
     
-    def button(self,root,gridx,gridy,text,font_size = 16,width = 200,height = 50,padx = 20,pady = 10,command = lambda : print("test")):
-        btn = ct.CTkButton(root,text = text,font = ("",font_size),width = width,height = height,command = command)
-        btn.grid(row = gridx,column = gridy,padx = padx,pady = pady)
-        return btn   
-    def header(self,root,text,gridx = 0,gridy = 0,font_size = 52,pady = (0,100),padx = 20):
-        text = ct.CTkLabel(root,text = text,font = ("",font_size))
-        text.grid(row = gridx,column = gridy,padx = padx,pady = pady)
-        return text
-    
-    def Control_or_Student(self):
-        frame = self.main_frame()
-        frame.grid_rowconfigure(0, weight=1)
-        frame.grid_rowconfigure(1, weight=1)
+    # def switch_to(self,page):
+    #     if(self.current):
+    #         self.current.grid_forget()
         
-        self.header(frame,"Sign in as....")
-        
-        buttons = ct.CTkFrame(frame,bg_color="transparent")
-        buttons.grid(row=1,column=0)
-        self.button(buttons,0,0,"Student",padx=50,pady=(40,20),command=lambda: self.switch_to(self.Student_login))
-        self.button(buttons,1,0,"Control",padx=50,pady=(20,40))
-        
-        return frame
+    #     frame = self.pages[page]
+    #     frame.grid(row=0,column=0)
+    #     self.current = frame
+    #     pass
     
-    def textbox_enter(self,event,button):
-        button.invoke()
-        return ("break")
     
-    def textbox_tab(self,event):
-        event.widget.tk_focusNext ().focus ()
-        return ("break")
     
-    #Student menus-------------
-    def Student_login(self):
+    
+    
+    
+    def login(self):
         
         frame = self.main_frame()
         
-        self.header(frame,"Student login")
+        self.header(frame,"Sign in...")
         
         input = ct.CTkFrame(frame)
         input.grid(row=1,column=0)
         
-        def checkpasswrod(id, password):
-            student = Student(id)
-            if(student.checkpassword(password)):
-                self.user = student
-                self.switch_to(self.Student_menu)
+        def checkpasswrod(id, password,student):
+            if(student):
+                user = Student(id)
+            else:
+                user = Control(id)
+            if(user.checkpassword(password)):
+                self.user = user
+                if(student):
+                    self.switch_to(self.Student_menu)
+                else:
+                    self.switch_to(self.Control_menu)
             else:
                 ct.CTkLabel(frame,text = "Wrong id or password",text_color="red").grid(row = 2,column = 0)
         
+        
         ct.CTkLabel(input,text = "ID",anchor="w").grid(row = 0,column = 0)
-        submit = self.button(input,4,0,"login",width = 150,height=30,command=lambda: checkpasswrod(id.get("1.0","end").strip(),password.get("1.0","end").strip()))    
         id = ct.CTkTextbox(input,height = 30,width = 200)
         id.bind("<Return>", self.textbox_tab)
         id.bind("<Tab>", self.textbox_tab)
         id.grid(row = 1,column = 0)
         ct.CTkLabel(input,text = "Password").grid(row = 2,column = 0)
+        
         password = ct.CTkTextbox(input,height = 30,width = 200)
-        password.bind("<Return>", lambda x : self.textbox_enter(x,submit))
+        password.bind("<Return>", lambda x : self.textbox_enter(x,studentlogin))
         password.bind("<Tab>", self.textbox_tab)
         password.grid(row = 3,column = 0,padx = 20)
-        # ct.entry
-        # ct.label
-        back = self.button(input,5,0,"back",width = 150,height=30,pady=(3,20),command = lambda: self.switch_to(self.Control_or_Student)) 
+        
+        soc = ct.CTkFrame(input,fg_color="transparent") #soc = Student or Control
+        soc.grid(row = 4,column = 0)
+        
+        studentlogin = self.button(soc,0,0,"Student login",width = 90,height=30,padx=5,command=lambda: checkpasswrod(id.get("1.0","end").strip(),password.get("1.0","end").strip(),True))    
+        controllogin = self.button(soc,0,1,"Control login",width = 90,height=30,padx=5,command=lambda: checkpasswrod(id.get("1.0","end").strip(),password.get("1.0","end").strip(),False))    
+        
+        back = self.button(input,5,0,"back",width = 215,height=30,pady=(3,20),command = lambda: self.switch_to(self.Control_or_Student)) 
         back.configure(fg_color="red")
         back.configure(hover_color="darkred")
                 
         return frame
     
     
+    #Student menus-------------------------------
     def Student_menu(self):
         frame = self.main_frame()
         
@@ -134,11 +89,27 @@ class App:
         
         editcourse = self.button(f,0,0,"Courses and Group")
         news = self.button(f,1,0,"News")
-        back = self.button(f,2,0,"login screen",command = lambda:self.switch_to(self.Control_or_Student))
+        back = self.button(f,2,0,"login screen",command = lambda:self.switch_to(self.login))
         back.configure(fg_color = "red",hover_color = "darkred")
             
         return frame
     #--------------------------------------------
+    
+    #Control menus-------------------------------
+    def Control_menu(self):
+        frame = self.main_frame()
+        
+        self.header(frame,"Welcome, " + self.user.name)
+        
+        f = ct.CTkFrame(frame)
+        f.grid(row=1,column=0)
+        
+        editcourse = self.button(f,0,0,"Manage Students")
+        news = self.button(f,1,0,"Add News")
+        back = self.button(f,2,0,"login screen",command = lambda:self.switch_to(self.login))
+        back.configure(fg_color = "red",hover_color = "darkred")
+            
+        return frame
 
 root = ct.CTk()
 root.title("Control")
