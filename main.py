@@ -1,4 +1,4 @@
-from prototype import *
+from testclasses import *
 from pages import *
 import customtkinter as ct
 import time

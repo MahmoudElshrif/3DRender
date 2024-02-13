@@ -1,5 +1,5 @@
 import customtkinter as ct
-from prototype import *
+from testclasses import *
 
 def main_frame(self,root):
     frame = ct.CTkFrame(root,fg_color="transparent")
@@ -34,12 +34,6 @@ class Page(ct.CTkFrame):
         
         self.grid_forget()
         
-    
-        
-   
-    
-    
-
 
 class Login(Page):
     def textbox_enter(self,event,button):
@@ -123,15 +117,113 @@ class Student_menu(Page):
         f = ct.CTkFrame(self)
         f.grid(row=1,column=0)
         
-        editcourse = button(f,0,0,"Courses and Group")
+        editcourse = button(f,0,0,"Courses and Group",command=lambda:self.goto("Courses_menu"))
         news = button(f,1,0,"News")
         back = button(f,2,0,"login screen",command = lambda:self.goto("Login"))
         back.configure(fg_color = "red",hover_color = "darkred")
     
     def enter(self):
         self.header.configure(text="Welcome, " + self.manger.user.name)
+        
+        self.manger.pages["Courses_menu"].init_buttons()
+        
         super().enter()
         
+class Courses_menu(Page):
+    def __init__(self, master, manger, *args, **kwargs):
+        super().__init__(master, manger, *args, **kwargs)
+        
+        
+        size = [350]
+        color = "#" + "1c" *3
+        
+        coursesframe = ct.CTkFrame(self,fg_color="transparent")
+        coursesframe.grid(row=0,column=0)
+        
+        self.all = ct.CTkScrollableFrame(coursesframe,width=size[0],height=size[-1],fg_color=color)
+        self.all.grid(row=1,column=0,padx = 20)
+        # self.all.grid_propagate(False)
+        ct.CTkLabel(coursesframe,text="Unregistered Courses",font=("",16)).grid(row=0,column=0)
+        
+        self.registered = ct.CTkScrollableFrame(coursesframe,width=size[0],height=size[-1],fg_color=color)
+        self.registered.grid(row=1,column=1)
+        ct.CTkLabel(coursesframe,text="Registered Courses",font=("",16)).grid(row=0,column=1)
+
+        btns = ct.CTkFrame(self,fg_color="transparent")
+        btns.grid(row=2,column=0)
+        
+        self.confirm = button(btns,2,0,"Confirm",width=150,height=50,command=self.comfirm_popup)
+        self.cancel = button(btns,2,1,"Cancel",width=150,height=50,command=lambda: self.comfirm_popup(False))
+        
+        self.confirm.configure(fg_color="green",hover_color="darkgreen")
+        self.cancel.configure(fg_color="red",hover_color="darkred")
+
+        self.buttons = {}
+    
+    
+    def add_course_button(self,list,id):
+        course = ct.CTkButton(list,text = f"{Student.all_courses[id]} ({id})",font = ("",16),width = 400,height = 42,fg_color="transparent",hover_color = "#333333",anchor="w",command=lambda x=id: self.buttonpress(x))
+        course.pack(padx = 4,pady = 0,anchor="w")
+        self.buttons[id] = course
+        return course
+    
+    def comfirm_popup(self,conf = True):
+        self.confirmpop = ct.CTkFrame(self.master,fg_color="transparent")
+        self.confirmpop.grid(row=0,column=0,sticky="nsew")
+        self.confirmpop.grid_columnconfigure(0,weight=1)
+        self.confirmpop.grid_rowconfigure(0,weight=1)
+        
+        f = ct.CTkFrame(self.confirmpop,fg_color="#202020",width = 450,height = 250)
+        f.grid_propagate(False)
+        f.grid(row=0,column=0)
+        f.grid_columnconfigure(0,weight=1)
+        f.grid_rowconfigure(0,weight=1)
+        f.grid_rowconfigure(1,weight=1)
+        
+        header(f,"Confirm changes?" if conf else "Ignore changes?",0,0,font_size=32,pady=10).configure(height=50)
+        
+        btns = ct.CTkFrame(f,fg_color="transparent")
+        btns.grid(row=1,column=0)
+        
+        def back(conf):
+            self.confirmpop.destroy()
+            self.goto("Student_menu")
+        
+        if(conf):
+            yes = button(btns,0,0,"Confirm",width = 100,command = lambda:back(True))
+            yes.configure(fg_color="green",hover_color="darkgreen")
+            no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
+            no.configure(fg_color="red",hover_color="darkred")
+        else:
+            yes = button(btns,0,0,"Ignore",width = 100,command = lambda:back(False))
+            yes.configure(fg_color="red",hover_color="darkred")
+            no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
+            no.configure(fg_color="green",hover_color="darkgreen")
+        
+        # ct.CTkLabel(self.confirmpop,text="Are you sure?",font = ("",16)).grid(row=0,column=0)
+        
+    
+    def buttonpress(self,id):
+        self.buttons[id].destroy()
+        if id in self.manger.user.courses:
+            self.manger.user.remove_course(id)
+            self.add_course_button(self.all,id)
+        else:
+            self.manger.user.add_course(id)
+            self.add_course_button(self.registered,id)
+            # self.buttons.pop(id)
+            # self.all.remove(self.buttons[id])
+            # self.registered.add(self.buttons[id])
+        
+    
+    def init_buttons(self):
+        for i in self.buttons:
+            self.buttons[i].destroy()
+        self.buttons = {}
+        
+        for id in Student.all_courses:
+            parent = self.registered if id in self.manger.user.courses else self.all
+            self.add_course_button(parent,id)
 #------------------------------------------------------------------------------------
 
 #Control Pages------------------------------------------------------------------------
@@ -159,9 +251,9 @@ class PagesManger:
     def __init__(self,master) -> None:
         self.pages = {}
         self.current = None
-        self.user = None
+        self.user = Student(0)
         
-        for i in [Login, Student_menu, Control_menu]:
+        for i in [Login, Student_menu, Control_menu, Courses_menu]:
             self.pages[i.__name__] = i(master,self)
         
         self.pages["Login"].enter()
