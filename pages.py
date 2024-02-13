@@ -150,10 +150,18 @@ class Courses_menu(Page):
         ct.CTkLabel(coursesframe,text="Registered Courses",font=("",16)).grid(row=0,column=1)
 
         btns = ct.CTkFrame(self,fg_color="transparent")
-        btns.grid(row=2,column=0)
+        btns.grid(row=2,column=0,sticky="we")
         
-        self.confirm = button(btns,2,0,"Confirm",width=150,height=50,command=self.comfirm_popup)
-        self.cancel = button(btns,2,1,"Cancel",width=150,height=50,command=lambda: self.comfirm_popup(False))
+        
+        ct.CTkLabel(btns,text="Group",font=("",16)).grid(row=0,column=0,padx=10,sticky="w")
+        
+        self.selectedgroup = ct.StringVar(self,value="A")
+        self.group = ct.CTkOptionMenu(btns,variable=self.selectedgroup,values = Student.all_groups,font = ("",16),width = 117,height = 50, fg_color=color,button_color=color)
+        self.group.grid(row=0,column=1,padx=(0,30),sticky="w")
+        
+        self.confirm = button(btns,0,2,"Confirm",width=150,height=50,command=self.comfirm_popup)
+        self.cancel = button(btns,0,3,"Cancel",width=150,height=50,command=lambda: self.comfirm_popup(False))
+        
         
         self.confirm.configure(fg_color="green",hover_color="darkgreen")
         self.cancel.configure(fg_color="red",hover_color="darkred")
@@ -166,6 +174,9 @@ class Courses_menu(Page):
         course.pack(padx = 4,pady = 0,anchor="w")
         self.buttons[id] = course
         return course
+    
+    def get_button_position(self,id):
+        return (id in self.manger.user.courses) ^ (id in self.changed) #True = registered, False = unregistered
     
     def comfirm_popup(self,conf = True):
         self.confirmpop = ct.CTkFrame(self.master,fg_color="transparent")
@@ -200,29 +211,31 @@ class Courses_menu(Page):
             no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
             no.configure(fg_color="green",hover_color="darkgreen")
         
-        # ct.CTkLabel(self.confirmpop,text="Are you sure?",font = ("",16)).grid(row=0,column=0)
-        
     
     def buttonpress(self,id):
         self.buttons[id].destroy()
-        if id in self.manger.user.courses:
-            self.manger.user.remove_course(id)
+        if self.get_button_position(id):
             self.add_course_button(self.all,id)
         else:
-            self.manger.user.add_course(id)
             self.add_course_button(self.registered,id)
-            # self.buttons.pop(id)
-            # self.all.remove(self.buttons[id])
-            # self.registered.add(self.buttons[id])
+        if(id in self.changed):
+            self.changed.remove(id)
+            self.buttons[id].configure(fg_color="transparent",hover_color="#333333")
+        else:
+            self.buttons[id].configure(fg_color="#333333",hover_color="#3f3f3f")
+            self.changed.append(id)
         
     
     def init_buttons(self):
+        self.changed = []
         for i in self.buttons:
             self.buttons[i].destroy()
         self.buttons = {}
         
+        self.selectedgroup = ct.StringVar(self,value=self.manger.user.group)
+        
         for id in Student.all_courses:
-            parent = self.registered if id in self.manger.user.courses else self.all
+            parent = self.registered if self.get_button_position(id) else self.all
             self.add_course_button(parent,id)
 #------------------------------------------------------------------------------------
 
@@ -236,9 +249,11 @@ class Control_menu(Page):
         f = ct.CTkFrame(self)
         f.grid(row=1,column=0)
         
-        editcourse = button(f,0,0,"Manage Students")
-        news = button(f,1,0,"Add News")
-        back = button(f,2,0,"login screen",command = lambda:self.goto("Login"))
+        managestudents = button(f,0,0,"Manage Students",command=lambda:self.goto("Student_search"))
+        managecourses = button(f,1,0,"Courses and Groups")
+        
+        news = button(f,2,0,"News")
+        back = button(f,3,0,"login screen",command = lambda:self.goto("Login"))
         back.configure(fg_color = "red",hover_color = "darkred")
     
     def enter(self):
@@ -246,14 +261,37 @@ class Control_menu(Page):
         
         super().enter()
 
+class Student_search(Page):
+    def __init__(self, master, manger, *args, **kwargs):
+        super().__init__(master, manger, *args, **kwargs)
+        
+        header(self,"Enter Student ID")
+        
+        self.idserch = ct.CTkTextbox(self,width=250,height=40,font=("",25))
+        self.idserch.grid(row=1,column=0,pady = (50,20))
+        self.idserch.bind("<Return>", self.search)
+        
+        submit = button(self,2,0,"Search",command = self.search,pady=10)
+        back = button(self,3,0,"Back",command = lambda:self.goto("Control_menu"),pady=10)
+        back.configure(fg_color = "red",hover_color = "darkred")
+    
+    def search(self):
+        pass
+    
+    def enter(self):
+        
+        super().enter()
+
+#--------------------------------------------------------------------------------
+
 
 class PagesManger:
     def __init__(self,master) -> None:
         self.pages = {}
         self.current = None
-        self.user = Student(0)
+        self.user = Control(0)
         
-        for i in [Login, Student_menu, Control_menu, Courses_menu]:
+        for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search]:
             self.pages[i.__name__] = i(master,self)
         
-        self.pages["Login"].enter()
+        self.pages["Student_search"].enter()

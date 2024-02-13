@@ -1,7 +1,7 @@
 #---------temporary test functions and classes, replace with the working ones---------
 class Student:
-    all_courses_names = [f"Course {i}" for i in range(30)]
-    all_courses = {(i[:2].upper() + "11" + i[-1]) : i for i in all_courses_names}
+    all_courses_names = ["Course {:02d}".format(i) for i in range(10)]
+    all_courses = {(i[:2].upper() + "1" + i[-2:]) : i for i in all_courses_names}
     all_groups = ["A","B","C","D"]
     def __init__(self,id):
         self.id = id
