@@ -22,15 +22,18 @@ class Page(ct.CTkFrame):
         self.manger = manger
         super().__init__(master, *args, **kwargs)
         self.configure(fg_color="transparent")
+        
     
-    def enter(self):
+    def enter(self,**args):
         self.grid(row=0,column=0)
+        
+        self.tkraise()
         
         self.manger.current = self
         
-    def goto(self,nextpage):
+    def goto(self,nextpage,**args):
         
-        self.manger.pages[nextpage].enter()
+        self.manger.pages[nextpage].enter(**args)
         
         self.grid_forget()
         
@@ -122,7 +125,7 @@ class Student_menu(Page):
         back = button(f,2,0,"login screen",command = lambda:self.goto("Login"))
         back.configure(fg_color = "red",hover_color = "darkred")
     
-    def enter(self):
+    def enter(self,**args):
         self.header.configure(text="Welcome, " + self.manger.user.name)
         
         self.manger.pages["Courses_menu"].init_buttons()
@@ -256,7 +259,7 @@ class Control_menu(Page):
         back = button(f,3,0,"login screen",command = lambda:self.goto("Login"))
         back.configure(fg_color = "red",hover_color = "darkred")
     
-    def enter(self):
+    def enter(self,**args):
         self.header.configure(text = "Welcome, " + self.manger.user.name)
         
         super().enter()
@@ -268,19 +271,68 @@ class Student_search(Page):
         header(self,"Enter Student ID")
         
         self.idserch = ct.CTkTextbox(self,width=250,height=40,font=("",25))
-        self.idserch.grid(row=1,column=0,pady = (50,20))
+        self.idserch.grid(row=2,column=0,pady = (50,20))
         self.idserch.bind("<Return>", self.search)
         
-        submit = button(self,2,0,"Search",command = self.search,pady=10)
-        back = button(self,3,0,"Back",command = lambda:self.goto("Control_menu"),pady=10)
+        submit = button(self,3,0,"Search",command = self.search,pady=10)
+        back = button(self,4,0,"Back",command = lambda:self.goto("Control_menu"),pady=10)
         back.configure(fg_color = "red",hover_color = "darkred")
     
     def search(self):
-        pass
+        self.goto("Student_info",id = self.idserch.get("1.0","end"))
     
-    def enter(self):
+    
+
+class Student_info(Page):
+    def __init__(self,master,manger,*args,**kwargs):
+        super().__init__(master,manger,*args,**kwargs)
         
-        super().enter()
+        
+        header(self,"Student Info",pady=(5,30))
+        
+        self.card = ct.CTkFrame(self,fg_color="transparent")
+        self.card.grid(row=1,column=0,sticky="news")
+        self.card.grid_propagate(False)
+        
+        self.showinfo = ct.CTkFrame(self.card,fg_color="#202020")
+        self.showinfo.grid(row=0,column=0)
+        
+        self.showinfo.grid_columnconfigure(0,weight=1)
+        
+        self.textframe = ct.CTkFrame(self.showinfo,fg_color="transparent")
+        self.textframe.grid(row=0,column=0,sticky="ew")
+        
+        self.textframe.grid_columnconfigure((0,1),weight=1,uniform="column")
+            
+        self.name = ct.CTkLabel(self.textframe,text="Name: Student Student Student",font=("",21))
+        self.name.grid(row=0,column=0,padx=85,pady=15)
+        
+        self.name = ct.CTkLabel(self.textframe,text="Password: 917adsf2",font=("",21))
+        self.name.grid(row=0,column=1,padx=85,pady=15)
+        
+        self.id = ct.CTkLabel(self.textframe,text="ID: 20132021",font=("",21))
+        self.id.grid(row=1,column=0,padx=85,pady=15)
+    
+        self.gpa = ct.CTkLabel(self.textframe,text="GPA: 4.0",font=("",21))
+        self.gpa.grid(row=1,column=1,padx=85,pady = 15)
+        
+        self.editinfo = button(self.showinfo,3,0,"Edit Info")
+        self.editinfo.grid(row=3,column=0,padx=10)
+    
+        
+        
+        
+        
+        
+    def enter(self, **args):
+        
+        self.grid_propagate(False)
+        self.grid(row=0, column=0, stick="nswe",padx=10,pady=10)
+        self.grid_columnconfigure(0,weight=1)
+        self.grid_rowconfigure(1,weight=1)
+        
+        return super().enter(**args)
+    
 
 #--------------------------------------------------------------------------------
 
@@ -291,7 +343,7 @@ class PagesManger:
         self.current = None
         self.user = Control(0)
         
-        for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search]:
+        for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search,Student_info]:
             self.pages[i.__name__] = i(master,self)
         
-        self.pages["Student_search"].enter()
+        self.pages["Student_info"].enter()
