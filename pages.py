@@ -454,6 +454,160 @@ class Student_info_edit(Page):
                 no.configure(fg_color="green",hover_color="darkgreen")
         except:
             self.warning = ct.CTkLabel(self.showinfo,text="GPA must be a number between 0 and 4",font=("",10),text_color="red").grid(row=1,column=0,pady=0)
+
+class Edit_Courses(Page):
+    def __init__(self, master, manger, *args, **kwargs):
+        super().__init__(master, manger, *args, **kwargs)
+        
+        
+        self.header = header(self,"Edit courses",pady=20)
+        self.header.configure(font=("",25))
+        self.header.grid(row=0,column=0,sticky = "new")
+        
+        self.cont = ct.CTkFrame(self,fg_color="transparent")
+        self.cont.grid(row=1,column=0)
+        
+        
+        self.coursesframe = ct.CTkScrollableFrame(self.cont,fg_color="#202020",width = 350,height = 320)
+        self.coursesframe.grid(row=1,column=0,padx=(30,10))
+        
+        self.inputcont = ct.CTkFrame(self.cont,fg_color="transparent")
+        self.inputcont.grid(row=2,column=0,sticky="new",padx=(10,40))
+        
+        
+        
+        ct.CTkLabel(self.inputcont,text="Course name:",font=("",12)).grid(row=0,column=0,padx = (20,0),sticky="w")
+        self.coursename = ct.CTkTextbox(self.inputcont,height=40,width=200,font=("",16))
+        self.coursename.grid(row=0,column=1,padx = (0,10),sticky="w")
+        
+        ct.CTkLabel(self.inputcont,text="id:",font=("",12)).grid(row=0,column=2,sticky="w")
+        self.courseid = ct.CTkTextbox(self.inputcont,height=40,width=80,font=("",16))
+        self.courseid.grid(row=0,column=3,padx = (0,10),sticky="w")
+        
+        self.groupcont = ct.CTkFrame(self.cont,fg_color="#202020",width = 240,height = 240)
+        self.groupcont.grid(row=1,column=1,sticky="new",padx=(10,40))
+        
+        
+        
+        self.buttonscont = ct.CTkFrame(self.cont,fg_color="transparent")
+        self.buttonscont.grid(row=4,column=0,padx=(20,0))
+        
+        self.addcourse = button(self.buttonscont,0,0,"Add Course",width=100,command=lambda: self.AddCourse(self.coursename.get("1.0","end-1c"),self.courseid.get("1.0","end-1c").upper()))
+        # self.addcourse.configure(fg_color="green",hover_color="darkgreen")
+        
+        self.removecourse = button(self.buttonscont,0,1,"Delete Course",width=100,command=lambda: self.delete(self.selected))
+        self.removecourse.configure(fg_color="#5a2020",hover_color="red")
+        self.removecourse.configure(state="disabled")
+        
+        self.confcont = ct.CTkFrame(self,fg_color="transparent")
+        self.confcont.grid(row=5,column=0,pady=20)
+        
+        self.confirmpop = button(self.confcont,0,0,"Confirm")
+        self.confirmpop.configure(fg_color="green",hover_color="darkgreen")
+        
+        self.cancelpop = button(self.confcont,0,1,"Cancel")
+        self.cancelpop.configure(fg_color="red",hover_color="darkred")
+        
+        self.warning = ct.CTkLabel(self.cont,text = "Name cant be empty and id must be excatlly 5 characters",text_color="red",anchor="w",font=("",16),height=35)    
+  
+        self.courses = {}
+        self.groups = {}
+        
+        self.todelete = []
+        self.toadd = {}
+        self.toedit = {}
+        
+        self.selected = None
+        
+  
+    
+    def getnormalcolor(self,id):
+        if(id in self.todelete):
+            return ("red","darkred")
+        elif(id in self.toadd):
+            return ("green","darkgreen")
+        else:
+            return ("transparent","#333333")
+    
+    def delete(self,id):
+        if(id in self.todelete):
+            self.todelete.remove(id)
+            clr = self.getnormalcolor(self.selected)
+            self.courses[self.selected].configure(fg_color=clr[0],hover_color=clr[1])
+        elif(id in self.toedit):
+            self.toedit.pop(id)
+            self.courses[id].configure(fg_color="transparent",hover_color="#333333",text=f"({id}) {Student.all_courses[id]}")
+        else:
+            if(id in self.toadd):
+                self.toadd.pop(id)
+                self.courses[id].destroy()
+                self.courses.pop(id)
+            else:
+                self.todelete.append(id)
+                clr = self.getnormalcolor(self.selected)
+                self.courses[self.selected].configure(fg_color=clr[0],hover_color=clr[1])
+                
+        self.selected = None
+        self.removecourse.configure(fg_color="#5a2020",hover_color="red",text="DeleteCourse")
+        self.removecourse.configure(state="disabled")
+                
+    
+    def enter(self,**args):
+        self.grid(row=0,column=0,sticky="nsew")
+        self.grid_propagate(False)
+        self.grid_columnconfigure(0,weight=1)
+        for i in Student.all_courses:
+            self.Add_Course_button(i)
+        super().enter(**args)
+
+    def select(self,id):
+        if(self.selected):
+            clr = self.getnormalcolor(self.selected)
+            self.courses[self.selected].configure(fg_color=clr[0],hover_color=clr[1])
+        
+        tex = ""
+        if(id in self.todelete):
+            tex = "Undo Delete"
+        elif(id in self.toedit):
+            tex = "Undo Edit"
+        else:
+            tex = "Delete Course"
+        self.removecourse.configure(state="normal",fg_color="red",text=tex)
+        
+        if(not (id in self.todelete or id in self.toadd or id in self.toedit)):
+            self.courses[id].configure(fg_color="#3f3f3f",hover_color="#4e4e4e")
+        self.selected = id
+    
+    def AddCourse(self,name,id):
+        if(len(id) != 5):
+            self.warning.configure(text = "Name cant be empty and id must be excatlly 5 characters")
+            self.warning.grid(row=3,column=0,pady=0)
+            return
+        
+        already = id in self.courses
+        
+        if(already):
+            self.courses[id].configure(fg_color="blue",hover_color="darkblue",text=f"({id}) {name}")
+            self.toedit[id] = name
+            if(id in self.todelete):
+                self.todelete.remove(id)
+        else:
+            self.toadd[id] = name
+            btn = self.Add_Course_button(id)
+            self.courses[id].configure(fg_color="green",hover_color="darkgreen")
+        self.warning.grid_forget()
+    
+    def Add_Course_button(self,id):
+        name = Student.all_courses[id] if id in Student.all_courses else self.toadd[id]
+        button = ct.CTkButton(self.coursesframe,text = f"({id}) {name}",fg_color="transparent",hover_color="#333333",anchor="w",font=("",16),height=35)
+        button.configure(command = lambda:self.select(id))
+        button.pack(expand=True,fill="both")
+        
+        self.courses[id] = button
+        
+        return button
+        
+
 #--------------------------------------------------------------------------------
 
 
@@ -463,7 +617,7 @@ class PagesManger:
         self.current = None
         self.user = Control(0)
         
-        for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search,Student_info,Student_info_edit]:
+        for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search,Student_info,Student_info_edit,Edit_Courses]:
             self.pages[i.__name__] = i(master,self)
         
-        self.pages["Student_info_edit"].enter()
+        self.pages["Edit_Courses"].enter()
