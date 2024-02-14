@@ -15,6 +15,13 @@ def header(root,text,gridx = 0,gridy = 0,font_size = 52,pady = (0,50),padx = 20)
     text.grid(row = gridx,column = gridy,padx = padx,pady = pady)
     return text
 
+def textbox_enter(event,button):
+        button.invoke()
+        return ("break")
+    
+def textbox_tab(event):
+    event.widget.tk_focusNext ().focus ()
+    return ("break")
 
 class Page(ct.CTkFrame):
     def __init__(self, master, manger, *args, **kwargs):
@@ -39,14 +46,6 @@ class Page(ct.CTkFrame):
         
 
 class Login(Page):
-    def textbox_enter(self,event,button):
-        button.invoke()
-        return ("break")
-    
-    def textbox_tab(self,event):
-        event.widget.tk_focusNext ().focus ()
-        return ("break")
-    
     def __init__(self,master,manger,*args,**kwargs):
         super().__init__(master,manger,*args,**kwargs)
             
@@ -75,8 +74,8 @@ class Login(Page):
         
         ct.CTkLabel(input,text = "ID",anchor="w").grid(row = 0,column = 0)
         id = ct.CTkTextbox(input,height = 30,width = 200)
-        id.bind("<Return>", self.textbox_tab)
-        id.bind("<Tab>", self.textbox_tab)
+        id.bind("<Return>", textbox_tab)
+        id.bind("<Tab>", textbox_tab)
         id.grid(row = 1,column = 0)
         
         self.id = id
@@ -84,8 +83,8 @@ class Login(Page):
         ct.CTkLabel(input,text = "Password").grid(row = 2,column = 0)
         
         password = ct.CTkTextbox(input,height = 30,width = 200)
-        password.bind("<Return>", lambda x : self.textbox_enter(x,studentlogin))
-        password.bind("<Tab>", self.textbox_tab)
+        password.bind("<Return>", lambda x : textbox_enter(x,studentlogin))
+        password.bind("<Tab>", textbox_tab)
         password.grid(row = 3,column = 0,padx = 20)
         
         self.password = password
@@ -402,43 +401,59 @@ class Student_info_edit(Page):
         self.editinfo = button(self.btns,3,0,"confirm")
         self.editinfo.grid(row=0,column=0,padx=10)
         self.editinfo.configure(fg_color = "green",hover_color = "darkgreen",command=lambda:self.confirm_popup(True))
-    
+
+        self.editname.bind("<Tab>", textbox_tab)
+        self.editname.bind("<Return>", textbox_tab)
+        self.editpassword.bind("<Tab>", textbox_tab)
+        self.editpassword.bind("<Return>", textbox_tab)
+        self.editgpa.bind("<Tab>", textbox_tab)
+        self.editgpa.bind("<Return>", lambda x: textbox_enter(x,self.editinfo))
+        
         self.back = button(self.btns,4,0,"cancel",command=lambda:self.confirm_popup(False))
         self.back.grid(row=0,column=1)
         self.back.configure(fg_color = "red",hover_color = "darkred")
     
     def confirm_popup(self,conf = True):
-        self.confirmpop = ct.CTkFrame(self.master,fg_color="transparent")
-        self.confirmpop.grid(row=0,column=0,sticky="nsew")
-        self.confirmpop.grid_columnconfigure(0,weight=1)
-        self.confirmpop.grid_rowconfigure(0,weight=1)
-        
-        f = ct.CTkFrame(self.confirmpop,fg_color="#202020",width = 450,height = 250)
-        f.grid_propagate(False)
-        f.grid(row=0,column=0)
-        f.grid_columnconfigure(0,weight=1)
-        f.grid_rowconfigure(0,weight=1)
-        f.grid_rowconfigure(1,weight=1)
-        
-        header(f,"Confirm changes?" if conf else "Ignore changes?",0,0,font_size=32,pady=10).configure(height=50)
-        
-        btns = ct.CTkFrame(f,fg_color="transparent")
-        btns.grid(row=1,column=0)
-        
-        def back(conf):
-            self.confirmpop.destroy()
-            self.goto("Student_info",id="123123")
-        
-        if(conf):
-            yes = button(btns,0,0,"Confirm",width = 100,command = lambda:back(True))
-            yes.configure(fg_color="green",hover_color="darkgreen")
-            no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
-            no.configure(fg_color="red",hover_color="darkred")
-        else:
-            yes = button(btns,0,0,"Ignore",width = 100,command = lambda:back(False))
-            yes.configure(fg_color="red",hover_color="darkred")
-            no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
-            no.configure(fg_color="green",hover_color="darkgreen")
+        print(self.editgpa.get(1.0,"end"))
+        try:
+            g = float(self.editgpa.get("1.0","end"))
+            if(g < 0 or g > 4):
+                raise Exception
+            
+            
+            self.confirmpop = ct.CTkFrame(self.master,fg_color="transparent")
+            self.confirmpop.grid(row=0,column=0,sticky="nsew")
+            self.confirmpop.grid_columnconfigure(0,weight=1)
+            self.confirmpop.grid_rowconfigure(0,weight=1)
+            
+            f = ct.CTkFrame(self.confirmpop,fg_color="#202020",width = 450,height = 250)
+            f.grid_propagate(False)
+            f.grid(row=0,column=0)
+            f.grid_columnconfigure(0,weight=1)
+            f.grid_rowconfigure(0,weight=1)
+            f.grid_rowconfigure(1,weight=1)
+            
+            header(f,"Confirm changes?" if conf else "Ignore changes?",0,0,font_size=32,pady=10).configure(height=50)
+            
+            btns = ct.CTkFrame(f,fg_color="transparent")
+            btns.grid(row=1,column=0)
+            
+            def back(conf):
+                self.confirmpop.destroy()
+                self.goto("Student_info",id="123123")
+            
+            if(conf):
+                yes = button(btns,0,0,"Confirm",width = 100,command = lambda:back(True))
+                yes.configure(fg_color="green",hover_color="darkgreen")
+                no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
+                no.configure(fg_color="red",hover_color="darkred")
+            else:
+                yes = button(btns,0,0,"Ignore",width = 100,command = lambda:back(False))
+                yes.configure(fg_color="red",hover_color="darkred")
+                no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
+                no.configure(fg_color="green",hover_color="darkgreen")
+        except:
+            self.warning = ct.CTkLabel(self.showinfo,text="GPA must be a number between 0 and 4",font=("",10),text_color="red").grid(row=1,column=0,pady=0)
 #--------------------------------------------------------------------------------
 
 
