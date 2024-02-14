@@ -162,8 +162,8 @@ class Courses_menu(Page):
         self.group = ct.CTkOptionMenu(btns,variable=self.selectedgroup,values = Student.all_groups,font = ("",16),width = 117,height = 50, fg_color=color,button_color=color)
         self.group.grid(row=0,column=1,padx=(0,30),sticky="w")
         
-        self.confirm = button(btns,0,2,"Confirm",width=150,height=50,command=self.comfirm_popup)
-        self.cancel = button(btns,0,3,"Cancel",width=150,height=50,command=lambda: self.comfirm_popup(False))
+        self.confirm = button(btns,0,2,"Confirm",width=150,height=50,command=self.confirm_popup)
+        self.cancel = button(btns,0,3,"Cancel",width=150,height=50,command=lambda: self.confirm_popup(False))
         
         
         self.confirm.configure(fg_color="green",hover_color="darkgreen")
@@ -181,7 +181,7 @@ class Courses_menu(Page):
     def get_button_position(self,id):
         return (id in self.manger.user.courses) ^ (id in self.changed) #True = registered, False = unregistered
     
-    def comfirm_popup(self,conf = True):
+    def confirm_popup(self,conf = True):
         self.confirmpop = ct.CTkFrame(self.master,fg_color="transparent")
         self.confirmpop.grid(row=0,column=0,sticky="nsew")
         self.confirmpop.grid_columnconfigure(0,weight=1)
@@ -287,15 +287,16 @@ class Student_info(Page):
     def __init__(self,master,manger,*args,**kwargs):
         super().__init__(master,manger,*args,**kwargs)
         
+        self.id = "0"
         
-        header(self,"Student Info",pady=(5,30))
+        header(self,"Student Info",pady=(100,10))
         
         self.card = ct.CTkFrame(self,fg_color="transparent")
         self.card.grid(row=1,column=0,sticky="news")
-        self.card.grid_propagate(False)
+        # self.card.grid_propagate(False)
         
-        self.showinfo = ct.CTkFrame(self.card,fg_color="#202020")
-        self.showinfo.grid(row=0,column=0)
+        self.showinfo = ct.CTkFrame(self,fg_color="#202020")
+        self.showinfo.grid(row=1,column=0)
         
         self.showinfo.grid_columnconfigure(0,weight=1)
         
@@ -303,25 +304,30 @@ class Student_info(Page):
         self.textframe.grid(row=0,column=0,sticky="ew")
         
         self.textframe.grid_columnconfigure((0,1),weight=1,uniform="column")
-            
-        self.name = ct.CTkLabel(self.textframe,text="Name: Student Student Student",font=("",21))
-        self.name.grid(row=0,column=0,padx=85,pady=15)
         
-        self.name = ct.CTkLabel(self.textframe,text="Password: 917adsf2",font=("",21))
-        self.name.grid(row=0,column=1,padx=85,pady=15)
+        pad = (20,35)
+        self.name = ct.CTkLabel(self.textframe,text="Name: Student Student Student",font=("",14))
+        self.name.grid(row=0,column=0,padx=pad[0],pady=pad[1])
         
-        self.id = ct.CTkLabel(self.textframe,text="ID: 20132021",font=("",21))
-        self.id.grid(row=1,column=0,padx=85,pady=15)
+        self.password = ct.CTkLabel(self.textframe,text="Password: 917adsf2",font=("",14))
+        self.password.grid(row=0,column=1,padx=pad[0],pady=pad[1])
+        
+        self.idtext = ct.CTkLabel(self.textframe,text="ID: 20132021",font=("",14))
+        self.idtext.grid(row=1,column=0,padx=pad[0],pady=pad[1])
     
-        self.gpa = ct.CTkLabel(self.textframe,text="GPA: 4.0",font=("",21))
-        self.gpa.grid(row=1,column=1,padx=85,pady = 15)
+        self.gpa = ct.CTkLabel(self.textframe,text="GPA: 4.0",font=("",14))
+        self.gpa.grid(row=1,column=1,padx=pad[0],pady = pad[1])
         
-        self.editinfo = button(self.showinfo,3,0,"Edit Info")
-        self.editinfo.grid(row=3,column=0,padx=10)
+        self.btns = ct.CTkLabel(self.showinfo)
+        self.btns.grid(row=3,column=0)
+        
+        self.editinfo = button(self.btns,3,0,"Edit Info", command=lambda:self.goto("Student_info_edit",id="123123"))
+        self.editinfo.grid(row=0,column=0,padx=10)
     
-        
-        
-        
+        self.back = button(self.btns,4,0,"back",command=lambda:self.goto("Student_search"))
+        self.back.grid(row=0,column=1)
+        self.back.configure(fg_color = "red",hover_color = "darkred")
+    
         
         
     def enter(self, **args):
@@ -331,9 +337,108 @@ class Student_info(Page):
         self.grid_columnconfigure(0,weight=1)
         self.grid_rowconfigure(1,weight=1)
         
+        self.id = args["id"]
+        
+        self.idtext.configure(text="ID: " + self.id)
+        
+        
         return super().enter(**args)
     
 
+class Student_info_edit(Page):
+    def __init__(self,master,manger,*args,**kwargs):
+        super().__init__(master,manger,*args,**kwargs)
+        
+        
+        header(self,"Edit Student Info",pady=(100,10))
+        
+        self.card = ct.CTkFrame(self,fg_color="transparent")
+        self.card.grid(row=1,column=0,sticky="news")
+        # self.card.grid_propagate(False)
+        
+        self.showinfo = ct.CTkFrame(self,fg_color="#202020")
+        self.showinfo.grid(row=1,column=0)
+        
+        self.showinfo.grid_columnconfigure(0,weight=1)
+        
+        self.textframe = ct.CTkFrame(self.showinfo,fg_color="transparent")
+        self.textframe.grid(row=0,column=0,sticky="ew")
+        
+        self.textframe.grid_columnconfigure((0,1),weight=1,uniform="column")
+        
+        pad = (20,35)
+        
+        self.namecont = ct.CTkFrame(self.textframe,fg_color="transparent")
+        self.namecont.grid(row=0,column=0)
+        
+        self.name = ct.CTkLabel(self.namecont,text="Name:",font=("",14))
+        self.name.grid(row=0,column=0,pady=pad[1],padx = (pad[0],0))
+        self.editname = ct.CTkTextbox(self.namecont,width=240,height=30,font=("",14))
+        self.editname.grid(row=0,column=1,pady=pad[1],padx = (0,pad[0]))
+        
+        self.passwordcont = ct.CTkFrame(self.textframe,fg_color="transparent")
+        self.passwordcont.grid(row=0,column=1)
+        
+        self.password = ct.CTkLabel(self.passwordcont,text="Password:",font=("",14))
+        self.password.grid(row=0,column=0,padx=pad[0],pady=pad[1])
+        self.editpassword = ct.CTkTextbox(self.passwordcont,width=170,height=30,font=("",14))
+        self.editpassword.grid(row=0,column=1,pady=pad[1],padx = (0,pad[0]))
+        
+        self.id = ct.CTkLabel(self.textframe,text="ID: 20132021",font=("",21))
+        self.id.grid(row=1,column=0,padx=pad[0],pady=pad[1])
+    
+        self.gpacont = ct.CTkFrame(self.textframe,fg_color="transparent")
+        self.gpacont.grid(row=1,column=1)
+        
+        self.gpa = ct.CTkLabel(self.gpacont,text="GPA:",font=("",14))
+        self.gpa.grid(row=0,column=0,padx=pad[0],pady=pad[1])
+        self.editgpa = ct.CTkTextbox(self.gpacont,width=70,height=30,font=("",14))
+        self.editgpa.grid(row=0,column=1,pady=pad[1],padx = (0,pad[0]))
+        
+        
+        self.btns = ct.CTkLabel(self.showinfo)
+        self.btns.grid(row=3,column=0)
+        
+        self.editinfo = button(self.btns,3,0,"confirm")
+        self.editinfo.grid(row=0,column=0,padx=10)
+        self.editinfo.configure(fg_color = "green",hover_color = "darkgreen",command=lambda:self.confirm_popup(True))
+    
+        self.back = button(self.btns,4,0,"cancel",command=lambda:self.confirm_popup(False))
+        self.back.grid(row=0,column=1)
+        self.back.configure(fg_color = "red",hover_color = "darkred")
+    
+    def confirm_popup(self,conf = True):
+        self.confirmpop = ct.CTkFrame(self.master,fg_color="transparent")
+        self.confirmpop.grid(row=0,column=0,sticky="nsew")
+        self.confirmpop.grid_columnconfigure(0,weight=1)
+        self.confirmpop.grid_rowconfigure(0,weight=1)
+        
+        f = ct.CTkFrame(self.confirmpop,fg_color="#202020",width = 450,height = 250)
+        f.grid_propagate(False)
+        f.grid(row=0,column=0)
+        f.grid_columnconfigure(0,weight=1)
+        f.grid_rowconfigure(0,weight=1)
+        f.grid_rowconfigure(1,weight=1)
+        
+        header(f,"Confirm changes?" if conf else "Ignore changes?",0,0,font_size=32,pady=10).configure(height=50)
+        
+        btns = ct.CTkFrame(f,fg_color="transparent")
+        btns.grid(row=1,column=0)
+        
+        def back(conf):
+            self.confirmpop.destroy()
+            self.goto("Student_info",id="123123")
+        
+        if(conf):
+            yes = button(btns,0,0,"Confirm",width = 100,command = lambda:back(True))
+            yes.configure(fg_color="green",hover_color="darkgreen")
+            no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
+            no.configure(fg_color="red",hover_color="darkred")
+        else:
+            yes = button(btns,0,0,"Ignore",width = 100,command = lambda:back(False))
+            yes.configure(fg_color="red",hover_color="darkred")
+            no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
+            no.configure(fg_color="green",hover_color="darkgreen")
 #--------------------------------------------------------------------------------
 
 
@@ -343,7 +448,7 @@ class PagesManger:
         self.current = None
         self.user = Control(0)
         
-        for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search,Student_info]:
+        for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search,Student_info,Student_info_edit]:
             self.pages[i.__name__] = i(master,self)
         
-        self.pages["Student_info"].enter()
+        self.pages["Student_info_edit"].enter()
