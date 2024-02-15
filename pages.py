@@ -208,7 +208,7 @@ class Courses_menu(Page):
             Student.all_students[self.manger.user.id]["courses"] = courses
             Student.all_students[self.manger.user.id]["group"] = self.group.get()
             
-            with open("students.json","w") as f:
+            with open("data/students.json","w") as f:
                 json.dump(Student.all_students,f)
                 
             back(True)
@@ -297,6 +297,10 @@ class Student_search(Page):
         self.goto("Student_info",user = Student(self.idsearch.get().strip()),add=False,mode = True)
         
     def add(self):
+        if(self.idsearch.get().strip().isnumeric() == False or len(self.idsearch.get().strip()) != 8):
+            self.warning = ct.CTkLabel(self,text="ID must be a 8 digits number",text_color="red")
+            self.warning.grid(row=6,column=0)
+            return
         if(self.idsearch.get().strip() == ""):
             self.warning = ct.CTkLabel(self,text="Please enter a valid ID",text_color="red")
             self.warning.grid(row=6,column=0)
@@ -305,7 +309,7 @@ class Student_search(Page):
             self.warning = ct.CTkLabel(self,text="Student already exists",text_color="red")
             self.warning.grid(row=6,column=0)
             return
-        self.goto("Student_info_edit",user = Student(self.idsearch.get("1.0","end").strip()),add=True)
+        self.goto("Student_info_edit",user = Student(self.idsearch.get().strip()),add=True)
     
     
 
@@ -338,6 +342,7 @@ class Student_info(Page):
         
         self.namenpass = ct.CTkFrame(self.textframe,fg_color="transparent")
         self.namenpass.grid(row=0,column=0,sticky="we")
+        self.namenpass.grid_columnconfigure((0,1),weight=1,uniform="column")
         
         self.name = ct.CTkLabel(self.namenpass,text="Name: Student Student Student",font=("",15))
         self.name.grid(row=0,column=0,padx=pad[0],pady=pad[1])
@@ -454,7 +459,7 @@ class Student_info_edit(Page):
         
         self.name = ct.CTkLabel(self.namecont,text="Name:",font=("",14))
         self.name.grid(row=0,column=0,pady=pad[1],padx = (pad[0],0))
-        self.editname = ct.CTkTextbox(self.namecont,width=240,height=30,font=("",14))
+        self.editname = ct.CTkEntry(self.namecont,width=240,height=30,font=("",14))
         self.editname.grid(row=0,column=1,pady=pad[1],padx = (0,pad[0]))
         
         self.passwordcont = ct.CTkFrame(self.toprow,fg_color="transparent")
@@ -462,7 +467,7 @@ class Student_info_edit(Page):
         
         self.password = ct.CTkLabel(self.passwordcont,text="Password:",font=("",14))
         self.password.grid(row=0,column=0,padx=pad[0],pady=pad[1])
-        self.editpassword = ct.CTkTextbox(self.passwordcont,width=170,height=30,font=("",14))
+        self.editpassword = ct.CTkEntry(self.passwordcont,width=170,height=30,font=("",14))
         self.editpassword.grid(row=0,column=1,pady=pad[1],padx = (0,pad[0]))
         
         self.botrow = ct.CTkFrame(self.textframe,fg_color="transparent")
@@ -485,7 +490,7 @@ class Student_info_edit(Page):
         
         self.gpa = ct.CTkLabel(self.gpacont,text="GPA:",font=("",14))
         self.gpa.grid(row=0,column=0,padx=pad[0],pady=pad[1])
-        self.editgpa = ct.CTkTextbox(self.gpacont,width=70,height=30,font=("",14))
+        self.editgpa = ct.CTkEntry(self.gpacont,width=70,height=30,font=("",14))
         self.editgpa.grid(row=0,column=1,pady=pad[1],padx = (0,pad[0]))
         
         
@@ -505,11 +510,11 @@ class Student_info_edit(Page):
         self.editgpa.bind("<Tab>", textbox_tab)
         self.editgpa.bind("<Return>", lambda x: textbox_enter(x,self.editinfo))
         
-        self.back = button(self.btns,2,0,"cancel",command=lambda:self.confirm_popup(False))
-        self.back.grid(row=0,column=1)
+        self.back = button(self.btns,0,2,"cancel",command=lambda:self.confirm_popup(False))
         self.back.configure(fg_color = "red",hover_color = "darkred")
         
-        # self.delete = button(self.btns,1,0,"Delete Student",)
+        self.delete = button(self.btns,0,1,"Delete Student",command=lambda:self.delete_popup())
+        self.delete.configure(fg_color = "red",hover_color = "darkred")
     
     def enter(self,**args):
         self.isadding = args["add"]
@@ -518,16 +523,19 @@ class Student_info_edit(Page):
         
         if(self.isadding):
             self.header.configure(text="Add New Student")
+            self.delete.grid_forget()
         else:
             self.header.configure(text="Edit Student Info")
             
-            self.editname.delete("1.0","end")
-            self.editpassword.delete("1.0","end")
-            self.editgpa.delete("1.0","end")
+            self.editname.delete(0,"end")
+            self.editpassword.delete(0,"end")
+            self.editgpa.delete(0,"end")
             
-            self.editname.insert("1.0",Student.all_students[self.id]["name"])
-            self.editpassword.insert("1.0",Student.all_students[self.id]["password"])
-            self.editgpa.insert("1.0",Student.all_students[self.id]["gpa"])
+            self.editname.insert(0,Student.all_students[self.id]["name"])
+            self.editpassword.insert(0,Student.all_students[self.id]["password"])
+            self.editgpa.insert(0,Student.all_students[self.id]["gpa"])
+            
+            self.delete.grid(row=0,column=1)
         self.idlabel.configure(text="ID: " + self.user.id)
         self.warning = ct.CTkLabel(self.showinfo,text="GPA must be a number between 0 and 4",font=("",10),text_color="red")
         
@@ -535,20 +543,65 @@ class Student_info_edit(Page):
             
         return super().enter(**args)
     
+    def goto(self,page,**args):
+        
+        self.warning.grid_forget()
+        
+        super().goto(page,**args)
+    
+    def delete_popup(self):
+        self.confirmpop = ct.CTkFrame(self.master,fg_color="transparent")
+        self.confirmpop.grid(row=0,column=0,sticky="nsew")
+        self.confirmpop.grid_columnconfigure(0,weight=1)
+        self.confirmpop.grid_rowconfigure(0,weight=1)
+        
+        f = ct.CTkFrame(self.confirmpop,fg_color="#202020",width = 450,height = 250)
+        f.grid_propagate(False)
+        f.grid(row=0,column=0)
+        f.grid_columnconfigure(0,weight=1)
+        f.grid_rowconfigure(0,weight=1)
+        f.grid_rowconfigure(1,weight=1)
+        
+        header(f,"Delete Student?",0,0,font_size=32,pady=10).configure(height=50)
+        
+        ct.CTkLabel(f,text="This action cannot be undone",font=("",14)).grid(row=1,column=0,pady=10)
+        
+        btns = ct.CTkFrame(f,fg_color="transparent")
+        btns.grid(row=1,column=0)
+        
+        def back(conf):
+            self.confirmpop.destroy()
+            if(not self.isadding):
+                self.goto("Student_info",user=self.user,mode=True)
+            else:
+                self.goto("Student_search")
+        
+        def delete_student():
+            Student.all_students.pop(self.id)
+            with open("data/students.json","w") as f:
+                json.dump(Student.all_students,f)
+            self.confirmpop.destroy()
+            self.goto("Student_search")
+        
+        yes = button(btns,0,0,"Confirm",width = 100,command=delete_student)
+        yes.configure(fg_color="green",hover_color="darkgreen")
+        no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
+        no.configure(fg_color="red",hover_color="darkred")
+    
     def confirm_popup(self,conf = True):
         try:
             if(conf):
-                if(len(self.editname.get("1.0","end").strip()) < 3):
+                if(len(self.editname.get().strip()) < 3):
                     self.warning.configure(text="Name must be at least 3 characters long")
                     self.warning.grid_forget()
                     self.warning.grid(row=1,column=0,pady=0)
                     return
-                if(len(self.editpassword.get("1.0","end").strip()) < 7):
+                if(len(self.editpassword.get().strip()) < 7):
                     self.warning.configure(text="Password must be at least 7 characters long")
                     self.warning.grid_forget()
                     self.warning.grid(row=1,column=0,pady=0)
                     return
-                g = float(self.editgpa.get("1.0","end").strip())
+                g = float(self.editgpa.get().strip())
                 if(g < 0 or g > 4):
                     self.warning.configure(text="GPA must be a number between 0 and 4")
                     self.warning.grid_forget()
@@ -584,11 +637,11 @@ class Student_info_edit(Page):
             def savestudent():
                 Student.Add_Student(
                     id = self.id,
-                    name = self.editname.get("1.0","end").strip(),
-                    password = self.editpassword.get("1.0","end").strip(),
+                    name = self.editname.get().strip(),
+                    password = self.editpassword.get().strip(),
                     group = "A",
                     courses = [],
-                    gpa = self.editgpa.get("1.0","end").strip(),
+                    gpa = self.editgpa.get().strip(),
                     level = self.editlevel.get().strip()
                 )
                 self.confirmpop.destroy()
@@ -632,18 +685,18 @@ class Edit_Courses(Page):
         
         
         ct.CTkLabel(self.inputcont,text="Course name:",font=("",12)).grid(row=0,column=0,padx = (20,0),sticky="w")
-        self.coursename = ct.CTkTextbox(self.inputcont,height=40,width=200,font=("",16))
+        self.coursename = ct.CTkEntry(self.inputcont,height=40,width=200,font=("",16))
         self.coursename.grid(row=0,column=1,padx = (0,10),sticky="w")
         
         ct.CTkLabel(self.inputcont,text="id:",font=("",12)).grid(row=0,column=2,sticky="w")
-        self.courseid = ct.CTkTextbox(self.inputcont,height=40,width=80,font=("",16))
+        self.courseid = ct.CTkEntry(self.inputcont,height=40,width=80,font=("",16))
         self.courseid.grid(row=0,column=3,padx = (0,10),sticky="w")
         
         
         self.buttonscont = ct.CTkFrame(self.cont,fg_color="transparent")
         self.buttonscont.grid(row=4,column=0,padx=(20,0))
         
-        self.addcourse = button(self.buttonscont,0,0,"Add Course",width=100,command=lambda: self.AddCourse(self.coursename.get("1.0","end-1c"),self.courseid.get("1.0","end-1c").upper()))
+        self.addcourse = button(self.buttonscont,0,0,"Add Course",width=100,command=lambda: self.AddCourse(self.coursename.get(),self.courseid.get().upper()))
         
         self.removecourse = button(self.buttonscont,0,1,"Delete Course",width=100,command=lambda: self.delete(self.selected))
         self.removecourse.configure(fg_color="#5a2020",hover_color="red")
@@ -662,7 +715,10 @@ class Edit_Courses(Page):
 
         self.coursename.bind("<Return>",textbox_tab)
         self.coursename.bind("<Tab>",textbox_tab)
-        self.courseid.bind("<Return>",textbox_tab)
+        def en(event):
+            textbox_tab(event)
+            textbox_enter(event,self.addcourse)
+        self.courseid.bind("<Return>",lambda x : en(x))
         self.courseid.bind("<Tab>",textbox_tab)
         
         self.courses = {}
@@ -760,6 +816,8 @@ class Edit_Courses(Page):
             btn = self.Add_Course_button(id)
             self.courses[id].configure(fg_color="green",hover_color="darkgreen")
         self.warning.grid_forget()
+        self.coursename.delete(0,"end")
+        self.courseid.delete(0,"end")
         
     
     def Add_Course_button(self,id):
@@ -808,7 +866,7 @@ class Edit_Courses(Page):
             
             
             
-            with open("courses.json","w") as f:
+            with open("data/courses.json","w") as f:
                 json.dump(Student.all_courses,f)
             
             back(True)

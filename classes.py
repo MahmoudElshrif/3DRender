@@ -16,7 +16,7 @@ class Student:
     def Add_Student(id,name,password,group,courses,gpa,level):
         Student.all_students[id] = get_student_dict(name,password,group,courses,gpa,level)
         
-        with open("students.json","w") as f:
+        with open("data/students.json","w") as f:
             json.dump(Student.all_students,f)
     
     @staticmethod
@@ -53,10 +53,11 @@ class Control:
 
 #------------------------------------------------------------------------------------------
 
-if os.path.exists("students.json"):
-    with open("students.json","r") as f:
+if os.path.exists("data/students.json"):
+    with open("data/students.json","r") as f:
         Student.all_students = json.load(f)
-    
-if os.path.exists("courses.json"):
-    with open("courses.json","r") as f:
+else:
+    os.mkdir("data")
+if os.path.exists("data/courses.json"):
+    with open("data/courses.json","r") as f:
         Student.all_courses = json.load(f)
