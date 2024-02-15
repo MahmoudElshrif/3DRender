@@ -103,7 +103,7 @@ class Login(Page):
     def goto(self,nextpage):
         if(self.wrongpassword):
             self.wrongpassword.grid_forget()
-        self.id.delete("1.0","end")
+        # self.id.delete("1.0","end")
         self.password.delete("1.0","end")
         
         super().goto(nextpage)
@@ -252,14 +252,14 @@ class Control_menu(Page):
         f.grid(row=1,column=0)
         
         managestudents = button(f,0,0,"Manage Students",command=lambda:self.goto("Student_search"))
-        managecourses = button(f,1,0,"Courses and Groups")
+        managecourses = button(f,1,0,"Manage Courses",command=lambda:self.goto("Edit_Courses"))
         
         news = button(f,2,0,"News")
         back = button(f,3,0,"login screen",command = lambda:self.goto("Login"))
         back.configure(fg_color = "red",hover_color = "darkred")
     
     def enter(self,**args):
-        self.header.configure(text = "Welcome, " + self.manger.user.name)
+        self.header.configure(text = "Control Menu")
         
         super().enter()
 
@@ -269,16 +269,20 @@ class Student_search(Page):
         
         header(self,"Enter Student ID")
         
-        self.idserch = ct.CTkTextbox(self,width=250,height=40,font=("",25))
-        self.idserch.grid(row=2,column=0,pady = (50,20))
-        self.idserch.bind("<Return>", self.search)
+        self.idsearch = ct.CTkTextbox(self,width=250,height=40,font=("",25))
+        self.idsearch.grid(row=2,column=0,pady = (50,20))
+        self.idsearch.bind("<Return>", self.search)
         
         submit = button(self,3,0,"Search",command = self.search,pady=10)
-        back = button(self,4,0,"Back",command = lambda:self.goto("Control_menu"),pady=10)
+        Add = button(self,4,0,"Add Student",command = self.add,pady=10)
+        back = button(self,5,0,"Back",command = lambda:self.goto("Control_menu"),pady=10)
         back.configure(fg_color = "red",hover_color = "darkred")
     
     def search(self):
-        self.goto("Student_info",id = self.idserch.get("1.0","end"))
+        self.goto("Student_info",user = Student(self.idsearch.get("1.0","end")),add=False)
+        
+    def add(self):
+        self.goto("Student_info_edit",user = Student(self.idsearch.get("1.0","end")),add=True)
     
     
 
@@ -302,25 +306,33 @@ class Student_info(Page):
         self.textframe = ct.CTkFrame(self.showinfo,fg_color="transparent")
         self.textframe.grid(row=0,column=0,sticky="ew")
         
-        self.textframe.grid_columnconfigure((0,1),weight=1,uniform="column")
+        # self.textframe.grid_rowconfigure((0,1),weight=1,uniform="row")
+        # self.textframe.grid_propagate(False)
         
         pad = (20,35)
-        self.name = ct.CTkLabel(self.textframe,text="Name: Student Student Student",font=("",14))
+        
+        
+        
+        self.name = ct.CTkLabel(self.textframe,text="Name: Student Student Student",font=("",15))
         self.name.grid(row=0,column=0,padx=pad[0],pady=pad[1])
         
-        self.password = ct.CTkLabel(self.textframe,text="Password: 917adsf2",font=("",14))
+        self.password = ct.CTkLabel(self.textframe,text="Password: 917adsf2",font=("",15))
         self.password.grid(row=0,column=1,padx=pad[0],pady=pad[1])
         
-        self.idtext = ct.CTkLabel(self.textframe,text="ID: 20132021",font=("",14))
+        self.idtext = ct.CTkLabel(self.textframe,text="ID: ",font=("",15))
         self.idtext.grid(row=1,column=0,padx=pad[0],pady=pad[1])
     
-        self.gpa = ct.CTkLabel(self.textframe,text="GPA: 4.0",font=("",14))
-        self.gpa.grid(row=1,column=1,padx=pad[0],pady = pad[1])
+        self.level = ct.CTkLabel(self.textframe,text="Level: 1",font=("",15))
+        self.level.grid(row=1,column=1,pady=pad[1])
+        
+        self.gpa = ct.CTkLabel(self.textframe,text="GPA: 4.0",font=("",15))
+        self.gpa.grid(row=1,column=2,padx=pad[0],pady = pad[1])
+        
         
         self.btns = ct.CTkLabel(self.showinfo)
         self.btns.grid(row=3,column=0)
         
-        self.editinfo = button(self.btns,3,0,"Edit Info", command=lambda:self.goto("Student_info_edit",id="123123"))
+        self.editinfo = button(self.btns,3,0,"Edit Info", command=lambda:self.goto("Student_info_edit",id=self.id))
         self.editinfo.grid(row=0,column=0,padx=10)
     
         self.back = button(self.btns,4,0,"back",command=lambda:self.goto("Student_search"))
@@ -336,10 +348,16 @@ class Student_info(Page):
         self.grid_columnconfigure(0,weight=1)
         self.grid_rowconfigure(1,weight=1)
         
-        self.id = args["id"]
+        self.user = args["user"]
+        
+        self.id = self.user.id
         
         self.idtext.configure(text="ID: " + self.id)
         
+        self.name.configure(text="Name: " + self.user.name)
+        self.password.configure(text="Password: " + self.user.id)
+        self.level.configure(text="Level: " + str(self.user.level))
+        self.gpa.configure(text="GPA: " + str(self.user.GPA))
         
         return super().enter(**args)
     
@@ -349,7 +367,7 @@ class Student_info_edit(Page):
         super().__init__(master,manger,*args,**kwargs)
         
         
-        header(self,"Edit Student Info",pady=(100,10))
+        self.header = header(self,"Edit Student Info",pady=(100,10))
         
         self.card = ct.CTkFrame(self,fg_color="transparent")
         self.card.grid(row=1,column=0,sticky="news")
@@ -383,8 +401,8 @@ class Student_info_edit(Page):
         self.editpassword = ct.CTkTextbox(self.passwordcont,width=170,height=30,font=("",14))
         self.editpassword.grid(row=0,column=1,pady=pad[1],padx = (0,pad[0]))
         
-        self.id = ct.CTkLabel(self.textframe,text="ID: 20132021",font=("",21))
-        self.id.grid(row=1,column=0,padx=pad[0],pady=pad[1])
+        self.idlabel = ct.CTkLabel(self.textframe,text="ID: ",font=("",21))
+        self.idlabel.grid(row=1,column=0,padx=pad[0],pady=pad[1])
     
         self.gpacont = ct.CTkFrame(self.textframe,fg_color="transparent")
         self.gpacont.grid(row=1,column=1)
@@ -413,8 +431,16 @@ class Student_info_edit(Page):
         self.back.grid(row=0,column=1)
         self.back.configure(fg_color = "red",hover_color = "darkred")
     
+    def enter(self,**args):
+        self.isadding = args["add"]
+        self.id = args["id"]
+        
+        if(self.isadding):
+            self.header.configure(text="Add New Student")
+        self.editgpa.insert("1.0","4.0")
+        return super().enter(**args)
+    
     def confirm_popup(self,conf = True):
-        print(self.editgpa.get(1.0,"end"))
         try:
             g = float(self.editgpa.get("1.0","end"))
             if(g < 0 or g > 4):
@@ -440,7 +466,7 @@ class Student_info_edit(Page):
             
             def back(conf):
                 self.confirmpop.destroy()
-                self.goto("Student_info",id="123123")
+                self.goto("Student_info",id=self.id)
             
             if(conf):
                 yes = button(btns,0,0,"Confirm",width = 100,command = lambda:back(True))
@@ -484,16 +510,11 @@ class Edit_Courses(Page):
         self.courseid = ct.CTkTextbox(self.inputcont,height=40,width=80,font=("",16))
         self.courseid.grid(row=0,column=3,padx = (0,10),sticky="w")
         
-        self.groupcont = ct.CTkFrame(self.cont,fg_color="#202020",width = 240,height = 240)
-        self.groupcont.grid(row=1,column=1,sticky="new",padx=(10,40))
-        
-        
         
         self.buttonscont = ct.CTkFrame(self.cont,fg_color="transparent")
         self.buttonscont.grid(row=4,column=0,padx=(20,0))
         
         self.addcourse = button(self.buttonscont,0,0,"Add Course",width=100,command=lambda: self.AddCourse(self.coursename.get("1.0","end-1c"),self.courseid.get("1.0","end-1c").upper()))
-        # self.addcourse.configure(fg_color="green",hover_color="darkgreen")
         
         self.removecourse = button(self.buttonscont,0,1,"Delete Course",width=100,command=lambda: self.delete(self.selected))
         self.removecourse.configure(fg_color="#5a2020",hover_color="red")
@@ -503,13 +524,13 @@ class Edit_Courses(Page):
         self.confcont.grid(row=5,column=0,pady=20)
         
         self.confirmpop = button(self.confcont,0,0,"Confirm")
-        self.confirmpop.configure(fg_color="green",hover_color="darkgreen")
+        self.confirmpop.configure(fg_color="green",hover_color="darkgreen",command = lambda:self.confirm_popup(True))
         
         self.cancelpop = button(self.confcont,0,1,"Cancel")
-        self.cancelpop.configure(fg_color="red",hover_color="darkred")
+        self.cancelpop.configure(fg_color="red",hover_color="darkred",command = lambda:self.confirm_popup(False))
         
         self.warning = ct.CTkLabel(self.cont,text = "Name cant be empty and id must be excatlly 5 characters",text_color="red",anchor="w",font=("",16),height=35)    
-  
+
         self.courses = {}
         self.groups = {}
         
@@ -556,6 +577,13 @@ class Edit_Courses(Page):
         self.grid(row=0,column=0,sticky="nsew")
         self.grid_propagate(False)
         self.grid_columnconfigure(0,weight=1)
+        
+        self.courses = self.toadd = self.todelete = self.toedit = {}
+        self.selected = None
+        
+        for i in self.coursesframe.winfo_children():
+            i.destroy()
+        
         for i in Student.all_courses:
             self.Add_Course_button(i)
         super().enter(**args)
@@ -606,6 +634,47 @@ class Edit_Courses(Page):
         self.courses[id] = button
         
         return button
+
+    def confirm_popup(self,conf = True):            
+        self.confirmpop = ct.CTkFrame(self.master,fg_color="transparent")
+        self.confirmpop.grid(row=0,column=0,sticky="nsew")
+        self.confirmpop.grid_columnconfigure(0,weight=1)
+        self.confirmpop.grid_rowconfigure(0,weight=1)
+        
+        f = ct.CTkFrame(self.confirmpop,fg_color="#202020",width = 450,height = 250)
+        f.grid_propagate(False)
+        f.grid(row=0,column=0)
+        f.grid_columnconfigure(0,weight=1)
+        f.grid_rowconfigure(0,weight=1)
+        f.grid_rowconfigure(1,weight=1)
+        
+        header(f,"Confirm changes?" if conf else "Ignore changes?",0,0,font_size=32,pady=10).configure(height=50)
+        
+        btns = ct.CTkFrame(f,fg_color="transparent")
+        btns.grid(row=1,column=0)
+        
+        def back(conf):
+            self.confirmpop.destroy()
+            self.goto("Control_menu")
+        
+        if(conf):
+            yes = button(btns,0,0,"Confirm",width = 100,command = lambda:back(True))
+            yes.configure(fg_color="green",hover_color="darkgreen")
+            no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
+            no.configure(fg_color="red",hover_color="darkred")
+        else:
+            yes = button(btns,0,0,"Ignore",width = 100,command = lambda:back(False))
+            yes.configure(fg_color="red",hover_color="darkred")
+            no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
+            no.configure(fg_color="green",hover_color="darkgreen")
+        
+        
+
+class News(Page):
+    def __init__(self,master,manger,*args,**kwargs):
+        super().__init__(master,manger,*args,**kwargs)
+        
+                        
         
 
 #--------------------------------------------------------------------------------
@@ -620,4 +689,4 @@ class PagesManger:
         for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search,Student_info,Student_info_edit,Edit_Courses]:
             self.pages[i.__name__] = i(master,self)
         
-        self.pages["Edit_Courses"].enter()
+        self.pages["Login"].enter()

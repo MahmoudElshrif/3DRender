@@ -6,9 +6,11 @@ class Student:
     def __init__(self,id):
         self.id = id
         self.name = "Student"
+        self.password = "Password"
         self.courses = list(self.all_courses.keys())[:5]
         self.group = "A"
         self.GPA = 4.0
+        self.level = 1
         pass
 
     def checkpassword(self,password):
