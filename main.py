@@ -1,4 +1,4 @@
-from testclasses import *
+from classes import *
 from pages import *
 import customtkinter as ct
 import time
@@ -15,6 +15,7 @@ class App:
         self.manger = PagesManger(self.master)
 
 
+ct.set_default_color_theme("dark-blue")
 root = ct.CTk()
 root.title("Control")
 app = App(root)

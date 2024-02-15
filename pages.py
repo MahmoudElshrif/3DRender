@@ -1,5 +1,5 @@
 import customtkinter as ct
-from testclasses import *
+from classes import *
 
 def main_frame(self,root):
     frame = ct.CTkFrame(root,fg_color="transparent")
@@ -122,7 +122,7 @@ class Student_menu(Page):
         back.configure(fg_color = "red",hover_color = "darkred")
     
     def enter(self,**args):
-        self.header.configure(text="Welcome, " + self.manger.user.name)
+        self.header.configure(text="Welcome, " + Student.all_students[self.manger.user.id]["name"].split(" ")[0])
         
         self.manger.pages["Courses_menu"].init_buttons()
         
@@ -175,7 +175,7 @@ class Courses_menu(Page):
         return course
     
     def get_button_position(self,id):
-        return (id in self.manger.user.courses) ^ (id in self.changed) #True = registered, False = unregistered
+        return (id in Student.all_students[self.manger.user.id]["courses"]) ^ (id in self.changed) #True = registered, False = unregistered
     
     def confirm_popup(self,conf = True):
         self.confirmpop = ct.CTkFrame(self.master,fg_color="transparent")
@@ -199,8 +199,22 @@ class Courses_menu(Page):
             self.confirmpop.destroy()
             self.goto("Student_menu")
         
+        def save():
+            
+            courses = []
+            for i in Student.all_courses:
+                if(self.get_button_position(i)):
+                    courses.append(i)
+            Student.all_students[self.manger.user.id]["courses"] = courses
+            Student.all_students[self.manger.user.id]["group"] = self.group.get()
+            
+            with open("students.json","w") as f:
+                json.dump(Student.all_students,f)
+                
+            back(True)
+        
         if(conf):
-            yes = button(btns,0,0,"Confirm",width = 100,command = lambda:back(True))
+            yes = button(btns,0,0,"Confirm",width = 100,command = save)
             yes.configure(fg_color="green",hover_color="darkgreen")
             no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
             no.configure(fg_color="red",hover_color="darkred")
@@ -231,7 +245,7 @@ class Courses_menu(Page):
             self.buttons[i].destroy()
         self.buttons = {}
         
-        self.selectedgroup = ct.StringVar(self,value=self.manger.user.group)
+        self.selectedgroup = ct.StringVar(self,value=Student.all_students[self.manger.user.id]["group"])
         
         for id in Student.all_courses:
             parent = self.registered if self.get_button_position(id) else self.all
@@ -283,7 +297,7 @@ class Student_search(Page):
         self.goto("Student_info",user = Student(self.idsearch.get("1.0","end").strip()),add=False,mode = True)
         
     def add(self):
-        if(self.idsearch.get("1.0","end") == ""):
+        if(self.idsearch.get("1.0","end").strip() == ""):
             self.warning = ct.CTkLabel(self,text="Please enter a valid ID",text_color="red")
             self.warning.grid(row=6,column=0)
             return
@@ -291,6 +305,7 @@ class Student_search(Page):
             self.warning = ct.CTkLabel(self,text="Student already exists",text_color="red")
             self.warning.grid(row=6,column=0)
             return
+        print(self.idsearch.get("1.0","end").strip(),len(self.idsearch.get("1.0","end").strip()))
         self.goto("Student_info_edit",user = Student(self.idsearch.get("1.0","end").strip()),add=True)
     
     
@@ -378,10 +393,10 @@ class Student_info(Page):
         else:
             self.editinfo.destroy()
         
-        self.name.configure(text="Name: " + self.user.name)
-        self.password.configure(text="Password: " + self.user.password)
-        self.level.configure(text="Level: " + str(self.user.level))
-        self.gpa.configure(text="GPA: " + str(self.user.GPA))
+        self.name.configure(text="Name: " + Student.all_students[self.id]["name"])
+        self.password.configure(text="Password: " + Student.all_students[self.id]["password"])
+        self.level.configure(text="Level: " + str(Student.all_students[self.id]["level"]))
+        self.gpa.configure(text="GPA: " + str(Student.all_students[self.id]["gpa"]))
         
         return super().enter(**args)
     
@@ -483,6 +498,8 @@ class Student_info_edit(Page):
             self.editpassword.insert("1.0",Student.all_students[self.id]["password"])
             self.editgpa.insert("1.0",Student.all_students[self.id]["gpa"])
         self.idlabel.configure(text="ID: " + self.user.id)
+        self.warning = ct.CTkLabel(self.showinfo,text="GPA must be a number between 0 and 4",font=("",10),text_color="red")
+        
             
             
         return super().enter(**args)
@@ -490,9 +507,23 @@ class Student_info_edit(Page):
     def confirm_popup(self,conf = True):
         try:
             if(conf):
-                g = float(self.editgpa.get("1.0","end"))
+                if(len(self.editname.get("1.0","end").strip()) < 3):
+                    self.warning.configure(text="Name must be at least 3 characters long")
+                    self.warning.grid_forget()
+                    self.warning.grid(row=1,column=0,pady=0)
+                    return
+                if(len(self.editpassword.get("1.0","end").strip()) < 7):
+                    self.warning.configure(text="Password must be at least 7 characters long")
+                    self.warning.grid_forget()
+                    self.warning.grid(row=1,column=0,pady=0)
+                    return
+                g = float(self.editgpa.get("1.0","end").strip())
                 if(g < 0 or g > 4):
-                    raise Exception
+                    self.warning.configure(text="GPA must be a number between 0 and 4")
+                    self.warning.grid_forget()
+                    self.warning.grid(row=1,column=0,pady=0)
+                    return
+                    
             
             
             self.confirmpop = ct.CTkFrame(self.master,fg_color="transparent")
@@ -544,7 +575,9 @@ class Student_info_edit(Page):
                 no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
                 no.configure(fg_color="green",hover_color="darkgreen")
         except:
-            self.warning = ct.CTkLabel(self.showinfo,text="GPA must be a number between 0 and 4",font=("",10),text_color="red").grid(row=1,column=0,pady=0)
+            self.warning.configure(text="GPA must be a number between 0 and 4")
+            self.warning.grid_forget()
+            self.warning.grid(row=1,column=0,pady=0)
 
 class Edit_Courses(Page):
     def __init__(self, master, manger, *args, **kwargs):
@@ -729,6 +762,9 @@ class Edit_Courses(Page):
             
             for i in self.todelete:
                 Student.all_courses.pop(i)
+                for s in Student.all_students:
+                    if i in Student.all_students[s]["courses"]:
+                        Student.all_students[s]["courses"].remove(i)
             for i in self.toadd:
                 Student.all_courses[i] = self.toadd[i]
             for i in self.toedit:

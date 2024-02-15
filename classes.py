@@ -1,4 +1,4 @@
-import json
+import json,os
 
 #---------temporary test functions and classes, replace with the working ones---------
 def get_student_dict(name,password,group,courses,gpa,level):
@@ -11,20 +11,6 @@ class Student:
     
     def __init__(self,id):
         self.id = id
-        if(id in Student.all_students):
-            self.name = Student.all_students[self.id]["name"]
-            self.password = Student.all_students[self.id]["password"]
-            self.courses = Student.all_students[self.id]["courses"]
-            self.group = Student.all_students[self.id]["group"]
-            self.GPA = Student.all_students[self.id]["gpa"]
-            self.level = Student.all_students[self.id]["level"]
-        else:
-            self.name = ""
-            self.password = ""
-            self.courses = []
-            self.group = ""
-            self.GPA = ""
-            self.level = ""
     
     @staticmethod
     def Add_Student(id,name,password,group,courses,gpa,level):
@@ -55,14 +41,6 @@ class Student:
     @staticmethod
     def delete_course():
         pass
-    
-    @staticmethod
-    def add_group():
-        pass
-    
-    @staticmethod
-    def remove_group():
-        pass
 
 class Control:
     def __init__(self,id):
@@ -74,8 +52,11 @@ class Control:
         return (id == password) and (id == "admin")
 
 #------------------------------------------------------------------------------------------
-with open("students.json","r") as f:
-    Student.all_students = json.load(f)
+
+if os.path.exists("students.json"):
+    with open("students.json","r") as f:
+        Student.all_students = json.load(f)
     
-with open("courses.json","r") as f:
-    Student.all_courses = json.load(f)
+if os.path.exists("courses.json"):
+    with open("courses.json","r") as f:
+        Student.all_courses = json.load(f)
