@@ -1,20 +1,43 @@
+import json
+
 #---------temporary test functions and classes, replace with the working ones---------
+def get_student_dict(name,password,group,courses,gpa,level):
+    return {"name":name,"password":password,"group":group,"courses":courses,"gpa":gpa,"level":level}
+
 class Student:
-    all_courses_names = ["Course {:02d}".format(i) for i in range(10)]
-    all_courses = {(i[:2].upper() + "1" + i[-2:]) : i for i in all_courses_names}
-    all_groups = ["A","B","C","D"]
+    all_courses = {}
+    all_groups = ["A","B","C"]
+    all_students = {}
+    
     def __init__(self,id):
         self.id = id
-        self.name = "Student"
-        self.password = "Password"
-        self.courses = list(self.all_courses.keys())[:5]
-        self.group = "A"
-        self.GPA = 4.0
-        self.level = 1
-        pass
-
-    def checkpassword(self,password):
-        return (self.id == password) and (self.id == "admin")
+        if(id in Student.all_students):
+            self.name = Student.all_students[self.id]["name"]
+            self.password = Student.all_students[self.id]["password"]
+            self.courses = Student.all_students[self.id]["courses"]
+            self.group = Student.all_students[self.id]["group"]
+            self.GPA = Student.all_students[self.id]["gpa"]
+            self.level = Student.all_students[self.id]["level"]
+        else:
+            self.name = ""
+            self.password = ""
+            self.courses = []
+            self.group = ""
+            self.GPA = ""
+            self.level = ""
+    
+    @staticmethod
+    def Add_Student(id,name,password,group,courses,gpa,level):
+        Student.all_students[id] = get_student_dict(name,password,group,courses,gpa,level)
+        
+        with open("students.json","w") as f:
+            json.dump(Student.all_students,f)
+    
+    @staticmethod
+    def checkpassword(id,password):
+        if(id not in Student.all_students):
+            return False
+        return Student.all_students[id]["password"] == password
     
     def add_course(self,course):
         self.courses.append(course)
@@ -46,7 +69,13 @@ class Control:
         self.id = id
         self.name = "Control"
 
-    def checkpassword(self,password):
-        return (self.id == password) and (self.id == "admin")
+    @staticmethod
+    def checkpassword(id,password):
+        return (id == password) and (id == "admin")
 
 #------------------------------------------------------------------------------------------
+with open("students.json","r") as f:
+    Student.all_students = json.load(f)
+    
+with open("courses.json","r") as f:
+    Student.all_courses = json.load(f)
