@@ -329,27 +329,35 @@ class Student_info(Page):
         self.textframe = ct.CTkFrame(self.showinfo,fg_color="transparent")
         self.textframe.grid(row=0,column=0,sticky="ew")
         
+        self.grid_columnconfigure(0,weight=1)
+        
         # self.textframe.grid_rowconfigure((0,1),weight=1,uniform="row")
         # self.textframe.grid_propagate(False)
         
         pad = (20,35)
         
+        self.namenpass = ct.CTkFrame(self.textframe,fg_color="transparent")
+        self.namenpass.grid(row=0,column=0,sticky="we")
         
-        
-        self.name = ct.CTkLabel(self.textframe,text="Name: Student Student Student",font=("",15))
+        self.name = ct.CTkLabel(self.namenpass,text="Name: Student Student Student",font=("",15))
         self.name.grid(row=0,column=0,padx=pad[0],pady=pad[1])
         
-        self.password = ct.CTkLabel(self.textframe,text="Password: 917adsf2",font=("",15))
+        self.password = ct.CTkLabel(self.namenpass,text="Password: 917adsf2",font=("",15))
         self.password.grid(row=0,column=1,padx=pad[0],pady=pad[1])
         
-        self.idtext = ct.CTkLabel(self.textframe,text="ID: ",font=("",15))
-        self.idtext.grid(row=1,column=0,padx=pad[0],pady=pad[1])
-    
-        self.level = ct.CTkLabel(self.textframe,text="Level: 1",font=("",15))
-        self.level.grid(row=1,column=1,pady=pad[1])
+        self.others = ct.CTkFrame(self.textframe,fg_color="transparent")
+        self.others.grid(row=1,column=0,sticky="we")
+        self.others.grid_columnconfigure((0,1,2),weight=1,uniform="column")
+        # self.others.grid_propagate(False)
         
-        self.gpa = ct.CTkLabel(self.textframe,text="GPA: 4.0",font=("",15))
-        self.gpa.grid(row=1,column=2,padx=pad[0],pady = pad[1])
+        self.idtext = ct.CTkLabel(self.others,text="ID: ",font=("",15))
+        self.idtext.grid(row=0,column=0,padx=pad[0],pady=pad[1])
+    
+        self.level = ct.CTkLabel(self.others,text="Level: 1",font=("",15))
+        self.level.grid(row=0,column=1,pady=pad[1])
+        
+        self.gpa = ct.CTkLabel(self.others,text="GPA: 4.0",font=("",15))
+        self.gpa.grid(row=0,column=2,padx=pad[0],pady = pad[1])
         
         
         self.btns = ct.CTkFrame(self.showinfo,fg_color="transparent")
@@ -361,6 +369,15 @@ class Student_info(Page):
         self.back = button(self.btns,4,0,"back",command=lambda:self.goto("Student_search" if self.mode else "Student_menu"))
         self.back.grid(row=0,column=1)
         self.back.configure(fg_color = "red",hover_color = "darkred")
+        
+        def show():
+            self.showpass.grid_forget()
+            self.password.grid(row=0,column=1,padx=20,pady=35)
+            
+        self.showpass = button(self.namenpass,0,1,"Show Password",command=lambda:show())
+        self.showpass.configure(fg_color="#313131",hover_color="#2f2f2f")
+        
+        # self.showpass.grid_forget()
     
     
     def checkStudent(self):
@@ -389,14 +406,12 @@ class Student_info(Page):
         
         if(self.mode):
             self.editinfo.grid(row=0,column=0,padx=10)
+            self.password.grid(row=0,column=1,padx=20,pady=35)
+            self.showpass.grid_forget()
         else:
-            self.editinfo.destroy()
+            self.editinfo.grid_forget()
             self.password.grid_forget()
-            self.showpass = button(self.textframe,0,1,"Show Password",command=lambda:show())
-            self.showpass.configure(fg_color="#313131",hover_color="#2f2f2f")
-            def show():
-                self.showpass.grid_forget()
-                self.password.grid(row=0,column=1,padx=20,pady=35)
+            self.showpass.grid(row=0,column=1,padx=20,pady=35)
                 
         
         self.name.configure(text="Name: " + Student.all_students[self.id]["name"])
@@ -426,11 +441,15 @@ class Student_info_edit(Page):
         self.textframe = ct.CTkFrame(self.showinfo,fg_color="transparent")
         self.textframe.grid(row=0,column=0,sticky="ew")
         
-        self.textframe.grid_columnconfigure((0,1),weight=1,uniform="column")
+        # self.textframe.grid_columnconfigure((0),weight=1)
         
         pad = (20,35)
         
-        self.namecont = ct.CTkFrame(self.textframe,fg_color="transparent")
+        self.toprow = ct.CTkFrame(self.textframe,fg_color="transparent")
+        self.toprow.grid(row=0,column=0)
+        self.toprow.grid_columnconfigure((0,1),weight=1,uniform="column")
+        
+        self.namecont = ct.CTkFrame(self.toprow,fg_color="transparent")
         self.namecont.grid(row=0,column=0)
         
         self.name = ct.CTkLabel(self.namecont,text="Name:",font=("",14))
@@ -438,7 +457,7 @@ class Student_info_edit(Page):
         self.editname = ct.CTkTextbox(self.namecont,width=240,height=30,font=("",14))
         self.editname.grid(row=0,column=1,pady=pad[1],padx = (0,pad[0]))
         
-        self.passwordcont = ct.CTkFrame(self.textframe,fg_color="transparent")
+        self.passwordcont = ct.CTkFrame(self.toprow,fg_color="transparent")
         self.passwordcont.grid(row=0,column=1)
         
         self.password = ct.CTkLabel(self.passwordcont,text="Password:",font=("",14))
@@ -446,18 +465,22 @@ class Student_info_edit(Page):
         self.editpassword = ct.CTkTextbox(self.passwordcont,width=170,height=30,font=("",14))
         self.editpassword.grid(row=0,column=1,pady=pad[1],padx = (0,pad[0]))
         
-        self.idlabel = ct.CTkLabel(self.textframe,text="ID: ",font=("",21))
+        self.botrow = ct.CTkFrame(self.textframe,fg_color="transparent")
+        self.botrow.grid(row=1,column=0)
+        self.botrow.grid_columnconfigure((0,1,2),weight=1,uniform="column")
+        
+        self.idlabel = ct.CTkLabel(self.botrow,text="ID: ",font=("",21))
         self.idlabel.grid(row=1,column=0,padx=pad[0],pady=pad[1])
     
-        self.levelcont = ct.CTkFrame(self.textframe,fg_color="transparent")
+        self.levelcont = ct.CTkFrame(self.botrow,fg_color="transparent")
         self.levelcont.grid(row=1,column=1)
         
         self.level = ct.CTkLabel(self.levelcont,text="Level:",font=("",14))
         self.level.grid(row=0,column=0,padx=pad[0],pady=pad[1])
-        self.editlevel = ct.CTkOptionMenu(self.levelcont,values=["1","2","3","4"],font=("",14))
+        self.editlevel = ct.CTkOptionMenu(self.levelcont,values=["1","2","3","4"],font=("",14),fg_color="#313131",button_color="#313131")
         self.editlevel.grid(row=0,column=1,pady=pad[1],padx = (0,pad[0]))
         
-        self.gpacont = ct.CTkFrame(self.textframe,fg_color="transparent")
+        self.gpacont = ct.CTkFrame(self.botrow,fg_color="transparent")
         self.gpacont.grid(row=1,column=2)
         
         self.gpa = ct.CTkLabel(self.gpacont,text="GPA:",font=("",14))
@@ -471,7 +494,7 @@ class Student_info_edit(Page):
         self.btns = ct.CTkLabel(self.showinfo)
         self.btns.grid(row=3,column=0)
         
-        self.editinfo = button(self.btns,3,0,"confirm")
+        self.editinfo = button(self.btns,0,0,"confirm")
         self.editinfo.grid(row=0,column=0,padx=10)
         self.editinfo.configure(fg_color = "green",hover_color = "darkgreen",command=lambda:self.confirm_popup(True))
 
@@ -482,9 +505,11 @@ class Student_info_edit(Page):
         self.editgpa.bind("<Tab>", textbox_tab)
         self.editgpa.bind("<Return>", lambda x: textbox_enter(x,self.editinfo))
         
-        self.back = button(self.btns,4,0,"cancel",command=lambda:self.confirm_popup(False))
+        self.back = button(self.btns,2,0,"cancel",command=lambda:self.confirm_popup(False))
         self.back.grid(row=0,column=1)
         self.back.configure(fg_color = "red",hover_color = "darkred")
+        
+        # self.delete = button(self.btns,1,0,"Delete Student",)
     
     def enter(self,**args):
         self.isadding = args["add"]
