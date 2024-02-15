@@ -391,6 +391,13 @@ class Student_info(Page):
             self.editinfo.grid(row=0,column=0,padx=10)
         else:
             self.editinfo.destroy()
+            self.password.grid_forget()
+            self.showpass = button(self.textframe,0,1,"Show Password",command=lambda:show())
+            self.showpass.configure(fg_color="#313131",hover_color="#2f2f2f")
+            def show():
+                self.showpass.grid_forget()
+                self.password.grid(row=0,column=1,padx=20,pady=35)
+                
         
         self.name.configure(text="Name: " + Student.all_students[self.id]["name"])
         self.password.configure(text="Password: " + Student.all_students[self.id]["password"])
