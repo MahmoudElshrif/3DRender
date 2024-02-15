@@ -15,7 +15,7 @@ class App:
         self.manger = PagesManger(self.master)
 
 
-ct.set_default_color_theme("dark-blue")
+ct.set_appearance_mode("dark")
 root = ct.CTk()
 root.title("Control")
 app = App(root)

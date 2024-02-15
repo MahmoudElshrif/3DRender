@@ -70,16 +70,16 @@ class Login(Page):
         
         
         ct.CTkLabel(input,text = "ID",anchor="w").grid(row = 0,column = 0)
-        id = ct.CTkTextbox(input,height = 30,width = 200)
+        id = ct.CTkEntry(input,height = 30,width = 200)
         id.bind("<Return>", textbox_tab)
         id.bind("<Tab>", textbox_tab)
         id.grid(row = 1,column = 0)
         
         self.id = id
-        
         ct.CTkLabel(input,text = "Password").grid(row = 2,column = 0)
         
-        password = ct.CTkTextbox(input,height = 30,width = 200)
+        # password = ct.CTkTextbox(input,height = 30,width = 200)
+        password = ct.CTkEntry(input,show="*",width = 200,height=30)
         password.bind("<Return>", lambda x : textbox_enter(x,studentlogin))
         password.bind("<Tab>", textbox_tab)
         password.grid(row = 3,column = 0,padx = 20)
@@ -89,8 +89,8 @@ class Login(Page):
         soc = ct.CTkFrame(input,fg_color="transparent") #soc = Student or Control
         soc.grid(row = 4,column = 0)
         
-        studentlogin = button(soc,0,0,"Student login",width = 90,height=30,padx=5,command=lambda: checkpasswrod(id.get("1.0","end").strip(),password.get("1.0","end").strip(),True))    
-        controllogin = button(soc,0,1,"Control login",width = 90,height=30,padx=5,command=lambda: checkpasswrod(id.get("1.0","end").strip(),password.get("1.0","end").strip(),False))    
+        studentlogin = button(soc,0,0,"Student login",width = 90,height=30,padx=5,command=lambda: checkpasswrod(id.get().strip(),password.get().strip(),True))    
+        controllogin = button(soc,0,1,"Control login",width = 90,height=30,padx=5,command=lambda: checkpasswrod(id.get().strip(),password.get().strip(),False))    
         
         back = button(input,5,0,"exit",width = 215,height=30,pady=(3,20),command = lambda: exit()) 
         back.configure(fg_color="red")
@@ -101,7 +101,7 @@ class Login(Page):
         if(self.wrongpassword):
             self.wrongpassword.grid_forget()
         # self.id.delete("1.0","end")
-        self.password.delete("1.0","end")
+        self.password.delete(0,len(self.password.get()) + 1)
         
         super().goto(nextpage)
         
@@ -280,9 +280,9 @@ class Student_search(Page):
         
         header(self,"Enter Student ID")
         
-        self.idsearch = ct.CTkTextbox(self,width=250,height=40,font=("",25))
+        self.idsearch = ct.CTkEntry(self,width=250,height=40,font=("",25))
         self.idsearch.grid(row=2,column=0,pady = (50,20))
-        self.idsearch.bind("<Return>", self.search)
+        self.idsearch.bind("<Return>", lambda x : self.search())
         
         submit = button(self,3,0,"Search",command = self.search,pady=10)
         Add = button(self,4,0,"Add Student",command = self.add,pady=10)
@@ -290,22 +290,21 @@ class Student_search(Page):
         back.configure(fg_color = "red",hover_color = "darkred")
     
     def search(self):
-        if(self.idsearch.get("1.0","end").strip() not in Student.all_students):
+        if(self.idsearch.get().strip() not in Student.all_students):
             self.warning = ct.CTkLabel(self,text="Student doesn't exists",text_color="red")
             self.warning.grid(row=6,column=0)
             return
-        self.goto("Student_info",user = Student(self.idsearch.get("1.0","end").strip()),add=False,mode = True)
+        self.goto("Student_info",user = Student(self.idsearch.get().strip()),add=False,mode = True)
         
     def add(self):
-        if(self.idsearch.get("1.0","end").strip() == ""):
+        if(self.idsearch.get().strip() == ""):
             self.warning = ct.CTkLabel(self,text="Please enter a valid ID",text_color="red")
             self.warning.grid(row=6,column=0)
             return
-        elif(self.idsearch.get("1.0","end").strip() in Student.all_students):
+        elif(self.idsearch.get().strip() in Student.all_students):
             self.warning = ct.CTkLabel(self,text="Student already exists",text_color="red")
             self.warning.grid(row=6,column=0)
             return
-        print(self.idsearch.get("1.0","end").strip(),len(self.idsearch.get("1.0","end").strip()))
         self.goto("Student_info_edit",user = Student(self.idsearch.get("1.0","end").strip()),add=True)
     
     
@@ -629,6 +628,11 @@ class Edit_Courses(Page):
         
         self.warning = ct.CTkLabel(self.cont,text = "Name cant be empty and id must be excatlly 5 characters",text_color="red",anchor="w",font=("",16),height=35)    
 
+        self.coursename.bind("<Return>",textbox_tab)
+        self.coursename.bind("<Tab>",textbox_tab)
+        self.courseid.bind("<Return>",textbox_tab)
+        self.courseid.bind("<Tab>",textbox_tab)
+        
         self.courses = {}
         self.groups = {}
         
