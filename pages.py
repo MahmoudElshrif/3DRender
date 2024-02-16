@@ -118,7 +118,8 @@ class Student_menu(Page):
         
         info = button(f,0,0,"Info",command=lambda:self.goto("Student_info",user=self.manger.user,mode=False))
         editcourse = button(f,1,0,"Courses and Group",command=lambda:self.goto("Courses_menu"))
-        back = button(f,2,0,"login screen",command = lambda:self.goto("Login"))
+        news = button(f,2,0,"News",command=lambda:self.goto("News"))
+        back = button(f,3,0,"login screen",command = lambda:self.goto("Login"))
         back.configure(fg_color = "red",hover_color = "darkred")
     
     def enter(self,**args):
@@ -265,7 +266,7 @@ class Control_menu(Page):
         managestudents = button(f,0,0,"Manage Students",command=lambda:self.goto("Student_search"))
         managecourses = button(f,1,0,"Manage Courses",command=lambda:self.goto("Edit_Courses"))
         
-        # news = button(f,2,0,"News")
+        news = button(f,2,0,"News",command=lambda:self.goto("News"))
         back = button(f,3,0,"login screen",command = lambda:self.goto("Login"))
         back.configure(fg_color = "red",hover_color = "darkred")
     
@@ -524,6 +525,11 @@ class Student_info_edit(Page):
         if(self.isadding):
             self.header.configure(text="Add New Student")
             self.delete.grid_forget()
+            
+            self.editname.delete(0,"end")
+            self.editpassword.delete(0,"end")
+            self.editgpa.delete(0,"end")
+            self.editlevel.set("1")
         else:
             self.header.configure(text="Edit Student Info")
             
@@ -888,6 +894,55 @@ class News(Page):
     def __init__(self,master,manger,*args,**kwargs):
         super().__init__(master,manger,*args,**kwargs)
         
+        self.header = header(self,"News",0,0,font_size=20,pady = 10)
+        
+        self.newscont = ct.CTkScrollableFrame(self,fg_color="#212121")
+        self.newscont.grid(row=1,column=0,sticky="nsew",padx=10)
+        # self.newscont.pack_propagate(False)
+        
+        for i in Student.news:
+            self.addPost(Student.news[i])
+        
+        self.back = button(self,3,0,"Back",command = lambda:self.goto("Control_menu"))
+        self.back.configure(fg_color="red",hover_color="darkred")
+    
+    
+    def addPost(self,post):
+        text = post["text"]
+        date = post["date"]
+        urgent = post["urgent"]
+        
+        postcont = ct.CTkFrame(self.newscont,fg_color="transparent",corner_radius=10)
+        postcont.pack(fill="both",expand=True,anchor="w",side="top",pady = 20)
+        postcont.grid_columnconfigure(0,weight=1)
+        
+        box = ct.CTkTextbox(postcont,font=("",16),wrap="word",activate_scrollbars=False,corner_radius=10)
+        box.insert("0.0",text)
+        
+        box.grid(row=0,column=0,sticky = "we",pady = 0)
+        
+        date = ct.CTkLabel(postcont,text = f"-{date}",anchor = "e",font = ("",14))
+        date.grid(row=1,column=0,pady = 0,sticky="e",padx=30)
+        
+        
+        sep = ct.CTkFrame(self.newscont,height=7,fg_color="#333333",corner_radius=10)
+        sep.pack(fill="x",expand=True)
+        
+        lines = box._textbox.count("1.0", "end", "ypixels", "update")
+        
+        box.configure(height=lines - 30)
+        box.configure(state="disabled",padx=10,pady=0,fg_color="transparent")
+        postcont.configure(fg_color=("transparent" if not urgent else "#662222"))
+    
+    def enter(self,**args):
+        
+        self.header.configure(text = "News")
+        self.grid_propagate(False)
+        self.grid(row=0,column=0,sticky="nsew")
+        self.grid_columnconfigure(0,weight=1)
+        self.grid_rowconfigure(1,weight=1)
+        
+        super().enter(**args)
                         
         
 
@@ -900,7 +955,7 @@ class PagesManger:
         self.current = None
         self.user = Control(0)
         
-        for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search,Student_info,Student_info_edit,Edit_Courses]:
+        for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search,Student_info,Student_info_edit,Edit_Courses,News]:
             self.pages[i.__name__] = i(master,self)
         
         self.pages["Login"].enter()

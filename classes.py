@@ -1,13 +1,16 @@
 import json,os
+import random
+import time
 
 #---------temporary test functions and classes, replace with the working ones---------
 def get_student_dict(name,password,group,courses,gpa,level):
-    return {"name":name,"password":password,"group":group,"courses":courses,"gpa":gpa,"level":level}
+    return {"name":name,"password":password,"group":group,"courses":courses,"gpa":gpa,"level":level,"inbox":[]}
 
 class Student:
     all_courses = {}
     all_groups = ["A","B","C"]
     all_students = {}
+    news = []
     
     def __init__(self,id):
         self.id = id
@@ -53,11 +56,29 @@ class Control:
 
 #------------------------------------------------------------------------------------------
 
+if not os.path.exists("data"):
+    os.mkdir("data")
+
 if os.path.exists("data/students.json"):
     with open("data/students.json","r") as f:
         Student.all_students = json.load(f)
-else:
-    os.mkdir("data")
+        
 if os.path.exists("data/courses.json"):
     with open("data/courses.json","r") as f:
         Student.all_courses = json.load(f)
+        
+with open("data/news.json","w") as f:
+    lis = {}
+    k = ""
+    for i in range(5):
+        
+        for x in range(100):
+            k += str(x + i * 100) * 3 + ("\n" if x % 10 == 0 else "")
+        
+        lis[i] = {"text":k, "date":time.strftime("%Y/%m/%d"),"urgent":random.choice([True,False])}
+        k = ""
+            
+    json.dump(lis,f)
+if os.path.exists("data/news.json"):
+    with open("data/news.json","r") as f:
+        Student.news = json.load(f)
