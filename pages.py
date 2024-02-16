@@ -118,7 +118,8 @@ class Student_menu(Page):
         
         info = button(f,0,0,"Info",command=lambda:self.goto("Student_info",user=self.manger.user,mode=False))
         editcourse = button(f,1,0,"Courses and Group",command=lambda:self.goto("Courses_menu"))
-        news = button(f,2,0,"News",command=lambda:self.goto("News"))
+        
+        self.news = button(f,2,0,f"News",command=lambda:self.goto("News"))
         back = button(f,3,0,"login screen",command = lambda:self.goto("Login"))
         back.configure(fg_color = "red",hover_color = "darkred")
     
@@ -127,6 +128,11 @@ class Student_menu(Page):
         
         self.manger.pages["Courses_menu"].init_buttons()
         
+        unread = len(Student.news) - Student.all_students[self.manger.user.id]["read"]
+        if(unread > 0):
+            self.news.configure(text = f"News ({unread})")
+        else:
+            self.news.configure(text = "News")
         super().enter()
         
 class Courses_menu(Page):
@@ -821,6 +827,7 @@ class Edit_Courses(Page):
             self.toadd[id] = name
             btn = self.Add_Course_button(id)
             self.courses[id].configure(fg_color="green",hover_color="darkgreen")
+            
         self.warning.grid_forget()
         self.coursename.delete(0,"end")
         self.courseid.delete(0,"end")
@@ -900,11 +907,17 @@ class News(Page):
         self.newscont.grid(row=1,column=0,sticky="nsew",padx=10)
         # self.newscont.pack_propagate(False)
         
-        for i in Student.news:
-            self.addPost(Student.news[i])
         
-        self.back = button(self,3,0,"Back",command = lambda:self.goto("Control_menu"))
+        self.btns = ct.CTkFrame(self,fg_color="transparent")
+        self.btns.grid(row=2,column=0)
+        
+        self.post = button(self.btns,0,0,"Post",command = lambda:self.goto("Post_News"))
+        
+        self.back = button(self.btns,0,1,"Back",command = lambda:self.goto("Control_menu"))
         self.back.configure(fg_color="red",hover_color="darkred")
+        
+        for i in range(len(Student.news)):
+            self.addPost(Student.news[i])
     
     
     def addPost(self,post):
@@ -912,11 +925,14 @@ class News(Page):
         date = post["date"]
         urgent = post["urgent"]
         
+        sep = ct.CTkFrame(self.newscont,height=7,fg_color="#333333",corner_radius=10)
+        sep.pack(fill="x",expand=True,side="bottom")
+        
         postcont = ct.CTkFrame(self.newscont,fg_color="transparent",corner_radius=10)
-        postcont.pack(fill="both",expand=True,anchor="w",side="top",pady = 20)
+        postcont.pack(fill="both",expand=True,anchor="w",side="bottom",pady = 20)
         postcont.grid_columnconfigure(0,weight=1)
         
-        box = ct.CTkTextbox(postcont,font=("",16),wrap="word",activate_scrollbars=False,corner_radius=10)
+        box = ct.CTkTextbox(postcont,font=("",16),activate_scrollbars=False,corner_radius=10,wrap="word")
         box.insert("0.0",text)
         
         box.grid(row=0,column=0,sticky = "we",pady = 0)
@@ -925,27 +941,126 @@ class News(Page):
         date.grid(row=1,column=0,pady = 0,sticky="e",padx=30)
         
         
-        sep = ct.CTkFrame(self.newscont,height=7,fg_color="#333333",corner_radius=10)
-        sep.pack(fill="x",expand=True)
         
         lines = box._textbox.count("1.0", "end", "ypixels", "update")
         
-        box.configure(height=lines - 30)
+        box.configure(height=lines - 20)
         box.configure(state="disabled",padx=10,pady=0,fg_color="transparent")
         postcont.configure(fg_color=("transparent" if not urgent else "#662222"))
     
     def enter(self,**args):
-        
+            
         self.header.configure(text = "News")
         self.grid_propagate(False)
         self.grid(row=0,column=0,sticky="nsew")
         self.grid_columnconfigure(0,weight=1)
         self.grid_rowconfigure(1,weight=1)
         
+        if(len(Student.news) != len(self.newscont.winfo_children())):
+            self.addPost(Student.news[-1])
+            
+        if(type(self.manger.user) is Student):
+            self.post.grid_forget()
+            Student.all_students[self.manger.user.id]["read"] = len(Student.news)
+            
+            with open("data/students.json","w") as f:
+                json.dump(Student.all_students,f)
+        else:
+            self.post.grid(row=0,column=0)
+        
         super().enter(**args)
                         
         
 
+class Post_News(Page):
+    def __init__(self,master,manger,*args,**kwargs):
+        super().__init__(master,manger,*args,**kwargs)
+        
+        self.header = header(self,text="Post",pady=20,font_size=20)
+        
+        self.text = ct.CTkTextbox(self,font=("",16),corner_radius=10,wrap="word")
+        self.text.grid(row=1,column=0,sticky="news",padx=20)
+        
+        self.btns = ct.CTkFrame(self,fg_color="transparent")
+        self.btns.grid(row=2,column=0)
+        
+        self.urgent = ct.CTkCheckBox(self.btns,text="Urgent",font=("",14),)
+        self.urgent.grid(row=0,column=0,sticky="w")
+
+        self.post = button(self.btns,0,1,"Post")
+        self.post.configure(fg_color="green",hover_color="darkgreen",command = lambda:self.confirm_popup())
+        
+        self.back = button(self.btns,0,2,"Cancel",command = lambda:self.goto("News"))
+        self.back.configure(fg_color="red",hover_color="darkred")
+    
+    
+    def confirm_popup(self):            
+        self.confirmpop = ct.CTkFrame(self.master,fg_color="transparent")
+        self.confirmpop.grid(row=0,column=0,sticky="nsew")
+        self.confirmpop.grid_columnconfigure(0,weight=1)
+        self.confirmpop.grid_rowconfigure(0,weight=1)
+        
+        f = ct.CTkFrame(self.confirmpop,fg_color="#202020",width = 450,height = 250)
+        f.grid_propagate(False)
+        f.grid(row=0,column=0)
+        f.grid_columnconfigure(0,weight=1)
+        f.grid_rowconfigure(0,weight=1)
+        f.grid_rowconfigure(1,weight=1)
+        
+        header(f,"Post?",0,0,font_size=32,pady=10).configure(height=50)
+        
+        btns = ct.CTkFrame(f,fg_color="transparent")
+        btns.grid(row=1,column=0)
+        
+        def back(conf):
+            self.confirmpop.destroy()
+            self.goto("Control_menu")
+        
+        def post():
+            self.confirmpop.destroy()
+            
+            text = self.text.get("0.0", "end")
+            text = text.split("\n")
+            
+            def shorted(text):
+                if(len(text) < 100):
+                    return text
+                else:
+                    return text[:100] + "\n" + shorted(text[100:])
+            
+            for i in range(len(text)):
+                text[i] = shorted(text[i])
+            
+            text = "\n".join(text)
+            
+            while text.endswith("\n"):
+                text = text[:-1]
+            
+            Student.news.append({"text":text,"date":time.strftime("%Y/%m/%d %H:%M"),"urgent":self.urgent.get()})
+            
+            with open("data/news.json","w") as f:
+                json.dump(Student.news,f)
+
+            self.text.delete("0.0", "end")
+            self.urgent.select(False)
+            
+            self.goto("News")
+        
+        yes = button(btns,0,0,"Confirm",width = 100,command=post)
+        yes.configure(fg_color="green",hover_color="darkgreen")
+        no = button(btns,0,1,"Cancel",width=100,command = lambda:self.confirmpop.destroy())
+        no.configure(fg_color="red",hover_color="darkred")
+        
+        
+    
+    def enter(self,**args):
+        super().enter(**args)
+        self.grid(row=0,column=0,sticky="nsew")
+        self.grid_propagate(False)
+        self.grid_columnconfigure(0,weight=1)
+        self.grid_rowconfigure(1,weight=1)
+        
+        
 #--------------------------------------------------------------------------------
 
 
@@ -955,7 +1070,7 @@ class PagesManger:
         self.current = None
         self.user = Control(0)
         
-        for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search,Student_info,Student_info_edit,Edit_Courses,News]:
+        for i in [Login, Student_menu, Control_menu, Courses_menu,Student_search,Student_info,Student_info_edit,Edit_Courses,News,Post_News]:
             self.pages[i.__name__] = i(master,self)
         
         self.pages["Login"].enter()
